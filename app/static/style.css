@@ -500,6 +500,15 @@ code {
     font-size: 0.9em;
 }
 
+.ip-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.ip-link:hover code {
+    background: var(--border);
+}
+
 .actions {
     display: flex;
     gap: 0.5rem;

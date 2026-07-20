@@ -47,8 +47,11 @@ with app.app_context():
         admin.is_admin = True
         db.session.commit()
     else:
+        admin_password = os.environ.get("ADMIN_PASSWORD")
+        if not admin_password:
+            raise RuntimeError("ADMIN_PASSWORD is required")
         admin = User(username="admin", is_admin=True)
-        admin.set_password(os.environ.get("ADMIN_PASSWORD", "qpKE4zzhmf"))
+        admin.set_password(admin_password)
         db.session.add(admin)
         db.session.commit()
         print("Admin user created.")

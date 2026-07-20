@@ -9,6 +9,7 @@ from flask import (
 )
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+from sqlalchemy import func
 
 from app import db
 from app.auth import admin_required, login_required
@@ -81,9 +82,19 @@ def recorders():
         order = "desc"
         items = query.order_by(column.desc()).all()
 
+    comment_counts = dict(
+        db.session.query(
+            RecorderComment.recorder_id,
+            func.count(RecorderComment.id),
+        )
+        .group_by(RecorderComment.recorder_id)
+        .all()
+    )
+
     return render_template(
         "recorders.html",
         recorders=items,
+        comment_counts=comment_counts,
         addresses=[
             row[0]
             for row in Recorder.query.with_entities(Recorder.address)

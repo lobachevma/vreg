@@ -41,7 +41,11 @@
         </div>
         <div>
             <dt>IP адрес регистратора</dt>
-            <dd><code>{{ recorder.ip_address }}</code></dd>
+            <dd>
+                <a href="http://{{ recorder.ip_address }}" target="_blank" rel="noopener noreferrer" class="ip-link">
+                    <code>{{ recorder.ip_address }}</code>
+                </a>
+            </dd>
         </div>
         <div>
             <dt>Логин</dt>
