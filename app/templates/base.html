@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VReg{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if session.get('username') %}
+    <header class="header">
+        <div class="container header-inner">
+            <a href="{{ url_for('main.recorders') }}" class="logo">Система учета видеорегистраторов</a>
+            <div class="header-actions">
+                <span class="username">{{ session.username }}</span>
+                <details class="dropdown">
+                    <summary class="dropdown-toggle btn btn-secondary">Меню</summary>
+                    <div class="dropdown-menu">
+                        {% if session.get('is_admin') %}
+                        <a href="{{ url_for('admin.index') }}">Управление</a>
+                        {% endif %}
+                        <a href="{{ url_for('main.recorders') }}">Регистраторы</a>
+                    </div>
+                </details>
+                <a href="{{ url_for('main.logout') }}" class="btn btn-secondary">Выйти</a>
+            </div>
+        </div>
+    </header>
+    {% endif %}
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-list">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}{% if category == 'success' %} flash-auto-hide{% endif %}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+        window.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".flash-auto-hide").forEach(function (el) {
+                window.setTimeout(function () {
+                    el.classList.add("flash-hidden");
+                    window.setTimeout(function () {
+                        el.remove();
+                    }, 250);
+                }, 3000);
+            });
+        });
+    </script>
+</body>
+</html>

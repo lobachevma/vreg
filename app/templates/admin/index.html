@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Админ-панель — VReg{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Админ-панель</h1>
+        <p class="subtitle">Управление пользователями и адресами зданий</p>
+    </div>
+</div>
+
+<div class="admin-grid">
+    <a href="{{ url_for('admin.users') }}" class="admin-card">
+        <h2>Пользователи</h2>
+        <p class="admin-count">{{ users_count }}</p>
+        <p class="subtitle">Создание учётных записей для входа в приложение</p>
+    </a>
+    <a href="{{ url_for('admin.buildings') }}" class="admin-card">
+        <h2>Адреса зданий</h2>
+        <p class="admin-count">{{ buildings_count }}</p>
+        <p class="subtitle">Справочник адресов для регистраторов</p>
+    </a>
+</div>
+{% endblock %}

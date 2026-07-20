@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Регистратор #{{ recorder.id }} — VReg{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Регистратор #{{ recorder.id }}</h1>
+        <p class="subtitle">{{ recorder.display_address }}</p>
+    </div>
+    <div class="detail-actions">
+        <a href="{{ url_for('main.recorders') }}" class="btn btn-secondary">Назад</a>
+        {% if session.get('is_admin') %}
+        <div class="detail-admin-actions">
+            <a href="{{ url_for('main.edit_recorder', recorder_id=recorder.id) }}" class="btn btn-primary">Изменить</a>
+            <form method="post" action="{{ url_for('main.delete_recorder', recorder_id=recorder.id) }}" onsubmit="return confirm('Удалить регистратор?');">
+                <button type="submit" class="btn btn-danger">Удалить</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="detail-card card">
+    <dl class="detail-list">
+        <div>
+            <dt>Адрес</dt>
+            <dd>{{ recorder.display_address }}</dd>
+        </div>
+        <div>
+            <dt>Тип здания</dt>
+            <dd>{{ recorder.building.display_type if recorder.building else "Не задан" }}</dd>
+        </div>
+        <div>
+            <dt>Модель регистратора</dt>
+            <dd>{{ recorder.model }}</dd>
+        </div>
+        <div>
+            <dt>Количество подключенных камер</dt>
+            <dd>{{ recorder.camera_count }}</dd>
+        </div>
+        <div>
+            <dt>IP адрес регистратора</dt>
+            <dd><code>{{ recorder.ip_address }}</code></dd>
+        </div>
+        <div>
+            <dt>Логин</dt>
+            <dd>{{ recorder.login }}</dd>
+        </div>
+        <div>
+            <dt>Глубина хранения</dt>
+            <dd class="{% if recorder.storage_depth < 30 %}storage-low{% else %}storage-ok{% endif %}">
+                {{ recorder.storage_depth }}
+            </dd>
+        </div>
+    </dl>
+
+    <form method="post" class="comment-form">
+        <label for="comment">Комментарий</label>
+        <textarea id="comment" name="comment" rows="5" placeholder="Введите комментарий для этого регистратора"></textarea>
+        <div class="comment-actions">
+            <button type="submit" name="action" value="save" class="btn btn-primary">Сохранить</button>
+        </div>
+    </form>
+
+    <div class="comment-preview">
+        <h2>Комментарии</h2>
+        {% if comments %}
+        <div class="comment-list">
+            {% for item in comments %}
+            <div class="comment-item">
+                <div class="comment-meta">
+                    <span class="comment-user">{{ item.login }}</span>
+                    <span class="comment-time">{{ item.created_at }}</span>
+                    {% if session.get('is_admin') %}
+                    <form method="post" class="comment-delete-inline" onsubmit="return confirm('Удалить комментарий?');">
+                        <input type="hidden" name="action" value="delete_comment">
+                        <input type="hidden" name="comment_id" value="{{ item.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                    </form>
+                    {% endif %}
+                </div>
+                <p>{{ item.comment }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="comment-empty">Комментариев пока нет.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Регистраторы — VReg{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Регистраторы</h1>
+        <p class="subtitle">Список установленных видеорегистраторов</p>
+        <form method="get" action="{{ url_for('main.recorders') }}" class="filter-form recorders-filter">
+            <label for="address" class="filter-label">Фильтр по адресу</label>
+            <select id="address" name="address" onchange="this.form.submit()">
+                <option value="">Все адреса</option>
+                {% for address in addresses %}
+                <option value="{{ address }}" {% if selected_address == address %}selected{% endif %}>
+                    {{ address }}
+                </option>
+                {% endfor %}
+            </select>
+            <noscript><button type="submit" class="btn btn-secondary btn-sm">Применить</button></noscript>
+            {% if sort %}
+            <input type="hidden" name="sort" value="{{ sort }}">
+            {% endif %}
+            {% if order %}
+            <input type="hidden" name="order" value="{{ order }}">
+            {% endif %}
+        </form>
+    </div>
+    <div class="header-tools">
+        {% if session.get('is_admin') %}
+        <a href="{{ url_for('main.add_recorder') }}" class="btn btn-primary">Добавить</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if recorders %}
+<div class="table-wrap">
+    <table class="recorders-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th class="sortable">
+                    {% set address_order = 'desc' if sort == 'address' and order == 'asc' else 'asc' %}
+                    <a href="{{ url_for('main.recorders', sort='address', order=address_order, address=selected_address) }}"
+                       class="sort-link{% if sort == 'address' %} active{% endif %}">
+                        Адрес
+                        {% if sort == 'address' %}
+                        <span class="sort-icon">{{ '▲' if order == 'asc' else '▼' }}</span>
+                        {% endif %}
+                    </a>
+                </th>
+                <th>Модель</th>
+                <th>Камеры</th>
+                <th>IP адрес</th>
+                <th>Логин</th>
+                <th>Глубина хранения</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for recorder in recorders %}
+            <tr class="recorder-row" data-href="{{ url_for('main.recorder_detail', recorder_id=recorder.id) }}" tabindex="0" role="link" aria-label="Открыть карточку регистратора {{ recorder.id }}">
+                <td>{{ recorder.id }}</td>
+                <td>{{ recorder.display_address }}</td>
+                <td>{{ recorder.model }}</td>
+                <td>{{ recorder.camera_count }}</td>
+                <td><code>{{ recorder.ip_address }}</code></td>
+                <td>{{ recorder.login }}</td>
+                <td class="{% if recorder.storage_depth < 30 %}storage-low{% else %}storage-ok{% endif %}">{{ recorder.storage_depth }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Записей пока нет.</p>
+    {% if session.get('is_admin') %}
+    <a href="{{ url_for('main.add_recorder') }}" class="btn btn-primary">Добавить первый регистратор</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+    window.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".recorder-row").forEach(function (row) {
+            row.addEventListener("click", function (event) {
+                if (event.target.closest("a, button, form, input, select, textarea, label")) {
+                    return;
+                }
+                window.location.href = row.dataset.href;
+            });
+
+            row.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    window.location.href = row.dataset.href;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

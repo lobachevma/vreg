@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Адреса зданий — VReg{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Адреса зданий</h1>
+        <p class="subtitle">Справочник адресов для привязки регистраторов</p>
+    </div>
+    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">Назад</a>
+</div>
+
+<form method="post" action="{{ url_for('admin.add_building') }}" class="form card admin-form">
+    <h2>Новый адрес</h2>
+    <label for="address">Адрес здания</label>
+    <input type="text" id="address" name="address" required placeholder="ул. Ленина, 10">
+
+    <label for="building_type">Тип здания</label>
+    <select id="building_type" name="building_type" required>
+        <option value="DOU">ДОУ</option>
+        <option value="SCHOOL">ШКОЛА</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary">Добавить адрес</button>
+</form>
+
+{% if buildings %}
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Адрес</th>
+                <th>Тип</th>
+                <th>Регистраторов</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for building in buildings %}
+            <tr>
+                <td>{{ building.id }}</td>
+                <td>{{ building.address }}</td>
+                <td>{{ building.display_type }}</td>
+                <td>{{ building.recorders|length }}</td>
+                <td class="actions">
+                    {% if not building.recorders %}
+                    <form method="post" action="{{ url_for('admin.delete_building', building_id=building.id) }}" onsubmit="return confirm('Удалить адрес?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Адресов пока нет.</p>
+</div>
+{% endif %}
+{% endblock %}

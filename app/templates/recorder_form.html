@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — VReg{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ title }}</h1>
+    </div>
+    <a href="{{ url_for('main.recorders') }}" class="btn btn-secondary">Назад</a>
+</div>
+
+<form method="post" action="{{ action }}" class="form card">
+    <label for="building_id">Адрес</label>
+    <select id="building_id" name="building_id" required {% if not buildings %}disabled{% endif %}>
+        <option value="">Выберите адрес</option>
+        {% for building in buildings %}
+        <option value="{{ building.id }}" {% if form.get('building_id')|string == building.id|string %}selected{% endif %}>
+            {{ building.address }}
+        </option>
+        {% endfor %}
+    </select>
+    {% if not buildings %}
+    <p class="hint">Нет доступных адресов. {% if session.get('is_admin') %}Добавьте их в <a href="{{ url_for('admin.buildings') }}">админ-панели</a>.{% else %}Обратитесь к администратору.{% endif %}</p>
+    {% endif %}
+
+    <label for="model">Модель регистратора</label>
+    <input type="text" id="model" name="model" value="{{ form.get('model', '') }}">
+
+    <label for="camera_count">Количество подключенных камер</label>
+    <input type="number" id="camera_count" name="camera_count" min="0" value="{{ form.get('camera_count', 0) }}">
+
+    <label for="ip_address">IP адрес регистратора</label>
+    <input type="text" id="ip_address" name="ip_address" value="{{ form.get('ip_address', '') }}" placeholder="192.168.1.100">
+
+    <label for="login">Логин</label>
+    <input type="text" id="login" name="login" value="{{ form.get('login', '') }}">
+
+    <label for="storage_depth">Глубина хранения (дней)</label>
+    <input type="number" id="storage_depth" name="storage_depth" min="0" value="{{ form.get('storage_depth', 0) }}" required>
+
+    <button type="submit" class="btn btn-primary" {% if not buildings %}disabled{% endif %}>Сохранить</button>
+</form>
+{% endblock %}

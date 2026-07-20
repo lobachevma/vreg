@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Вход — VReg{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1>VReg</h1>
+    <p class="subtitle">Учёт видеорегистраторов</p>
+
+    <form method="post" class="form">
+        <label for="username">Логин</label>
+        <input type="text" id="username" name="username" required autofocus>
+
+        <label for="password">Пароль</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit" class="btn btn-primary">Войти</button>
+    </form>
+</div>
+{% endblock %}
