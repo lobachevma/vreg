@@ -43,6 +43,7 @@ def login():
             session["user_id"] = user.id
             session["username"] = user.username
             session["is_admin"] = user.is_admin
+            session["last_activity"] = datetime.now(timezone.utc).timestamp()
             flash("Вы успешно вошли в систему.", "success")
             return redirect(url_for("main.recorders"))
 
@@ -170,6 +171,7 @@ def _parse_recorder_form():
     camera_count_raw = request.form.get("camera_count", "").strip()
     ip_address = request.form.get("ip_address", "").strip()
     login = request.form.get("login", "").strip()
+    password = request.form.get("password", "").strip()
     storage_depth_raw = request.form.get("storage_depth", "").strip()
 
     form = {
@@ -178,6 +180,7 @@ def _parse_recorder_form():
         "camera_count": camera_count_raw,
         "ip_address": ip_address,
         "login": login,
+        "password": password,
         "storage_depth": storage_depth_raw,
     }
 
@@ -243,6 +246,7 @@ def add_recorder():
             camera_count=camera_count,
             ip_address=form["ip_address"],
             login=form["login"],
+            password=form["password"],
             storage_depth=storage_depth,
         )
         db.session.add(recorder)
@@ -288,6 +292,8 @@ def edit_recorder(recorder_id):
         recorder.camera_count = camera_count
         recorder.ip_address = form["ip_address"]
         recorder.login = form["login"]
+        if form["password"]:
+            recorder.password = form["password"]
         recorder.storage_depth = storage_depth
         db.session.commit()
         flash("Данные регистратора обновлены.", "success")
@@ -301,6 +307,7 @@ def edit_recorder(recorder_id):
             "camera_count": recorder.camera_count,
             "ip_address": recorder.ip_address,
             "login": recorder.login,
+            "password": recorder.password,
             "storage_depth": recorder.storage_depth,
         },
         buildings=buildings,

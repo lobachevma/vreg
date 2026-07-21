@@ -42,6 +42,7 @@ class Recorder(db.Model):
     camera_count = db.Column(db.Integer, nullable=False, default=0)
     ip_address = db.Column(db.String(45), nullable=False)
     login = db.Column(db.String(256), nullable=False, default="")
+    password = db.Column(db.String(256), nullable=False, default="")
     storage_depth = db.Column(db.Integer, nullable=False, default=0)
     comment = db.Column(db.Text, nullable=False, default="")
 

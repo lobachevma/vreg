@@ -52,6 +52,10 @@
             <dd>{{ recorder.login }}</dd>
         </div>
         <div>
+            <dt>Пароль</dt>
+            <dd>{{ recorder.password }}</dd>
+        </div>
+        <div>
             <dt>Глубина хранения</dt>
             <dd class="{% if recorder.storage_depth < 30 %}storage-low{% else %}storage-ok{% endif %}">
                 {{ recorder.storage_depth }}

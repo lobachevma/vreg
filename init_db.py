@@ -17,6 +17,11 @@ with app.app_context():
     )
     db.session.execute(
         text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS password VARCHAR(256) NOT NULL DEFAULT ''"
+        )
+    )
+    db.session.execute(
+        text(
             "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS storage_depth INTEGER NOT NULL DEFAULT 0"
         )
     )
@@ -82,6 +87,9 @@ with app.app_context():
                     )
                 )
                 recorder.comment = ""
+
+    for recorder in Recorder.query.filter(Recorder.password.is_(None)).all():
+        recorder.password = ""
 
     db.session.commit()
 

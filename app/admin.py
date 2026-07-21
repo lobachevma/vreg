@@ -54,6 +54,10 @@ def add_user():
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
 
+    if user.username == "admin":
+        flash("Учётную запись admin удалить нельзя.", "danger")
+        return redirect(url_for("admin.users"))
+
     if user.id == session.get("user_id"):
         flash("Нельзя удалить текущего пользователя.", "danger")
         return redirect(url_for("admin.users"))
