@@ -418,6 +418,72 @@ th {
     word-break: break-word;
 }
 
+.password-field {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.password-value {
+    font-family: monospace;
+    letter-spacing: 0.06em;
+}
+
+.password-empty {
+    color: var(--muted);
+}
+
+.password-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.password-toggle:hover {
+    background: var(--border);
+}
+
+.password-toggle:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.password-toggle.is-loading {
+    color: var(--primary);
+}
+
+.password-toggle.is-visible {
+    color: var(--primary);
+}
+
+.password-icon {
+    width: 1rem;
+    height: 1rem;
+    display: block;
+}
+
+.password-icon-visible {
+    display: none;
+}
+
+.password-toggle.is-visible .password-icon-hidden {
+    display: none;
+}
+
+.password-toggle.is-visible .password-icon-visible {
+    display: block;
+}
+
 .comment-form {
     display: flex;
     flex-direction: column;

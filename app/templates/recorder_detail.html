@@ -53,7 +53,23 @@
         </div>
         <div>
             <dt>Пароль</dt>
-            <dd>{{ recorder.password }}</dd>
+            <dd class="password-field">
+                {% if recorder.password %}
+                <span class="password-value" data-password-url="{{ url_for('main.recorder_password', recorder_id=recorder.id) }}">********</span>
+                <button type="button" class="password-toggle" aria-label="Показать пароль" aria-pressed="false">
+                    <svg class="password-icon password-icon-hidden" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M1.5 12s3.8-7 10.5-7 10.5 7 10.5 7-3.8 7-10.5 7S1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M4 4l16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    <svg class="password-icon password-icon-visible" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M1.5 12s3.8-7 10.5-7 10.5 7 10.5 7-3.8 7-10.5 7S1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    </svg>
+                </button>
+                {% else %}
+                <span class="password-empty">Не задан</span>
+                {% endif %}
+            </dd>
         </div>
         <div>
             <dt>Глубина хранения</dt>
@@ -97,4 +113,59 @@
         {% endif %}
     </div>
 </div>
+<script>
+    window.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".password-field").forEach(function (field) {
+            const valueEl = field.querySelector(".password-value");
+            const toggle = field.querySelector(".password-toggle");
+            if (!valueEl || !toggle) return;
+            let loadedPassword = null;
+
+            toggle.addEventListener("click", function () {
+                const isHidden = valueEl.dataset.state !== "visible";
+                if (isHidden) {
+                    if (loadedPassword !== null) {
+                        valueEl.textContent = loadedPassword;
+                        valueEl.dataset.state = "visible";
+                        toggle.setAttribute("aria-label", "Скрыть пароль");
+                        toggle.setAttribute("aria-pressed", "true");
+                        toggle.classList.add("is-visible");
+                        return;
+                    }
+
+                    toggle.disabled = true;
+                    toggle.classList.add("is-loading");
+                    fetch(valueEl.dataset.passwordUrl, { headers: { "Accept": "application/json" } })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error("Не удалось загрузить пароль");
+                            }
+                            return response.json();
+                        })
+                        .then(function (data) {
+                            loadedPassword = data.password || "";
+                            valueEl.textContent = loadedPassword;
+                            valueEl.dataset.state = "visible";
+                            toggle.setAttribute("aria-label", "Скрыть пароль");
+                            toggle.setAttribute("aria-pressed", "true");
+                            toggle.classList.add("is-visible");
+                        })
+                        .catch(function () {
+                            valueEl.textContent = "Ошибка загрузки";
+                        })
+                        .finally(function () {
+                            toggle.disabled = false;
+                            toggle.classList.remove("is-loading");
+                        });
+                } else {
+                    valueEl.textContent = "********";
+                    valueEl.dataset.state = "hidden";
+                    toggle.setAttribute("aria-label", "Показать пароль");
+                    toggle.setAttribute("aria-pressed", "false");
+                    toggle.classList.remove("is-visible");
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

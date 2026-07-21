@@ -1,5 +1,6 @@
 from flask import (
     Blueprint,
+    jsonify,
     flash,
     redirect,
     render_template,
@@ -165,6 +166,15 @@ def recorder_detail(recorder_id):
     return render_template("recorder_detail.html", recorder=recorder, comments=comments)
 
 
+@bp.route("/recorders/<int:recorder_id>/password")
+@login_required
+def recorder_password(recorder_id):
+    recorder = Recorder.query.get_or_404(recorder_id)
+    response = jsonify(password=recorder.password or "")
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def _parse_recorder_form():
     building_id_raw = request.form.get("building_id", "").strip()
     model = request.form.get("model", "").strip()
@@ -292,8 +302,7 @@ def edit_recorder(recorder_id):
         recorder.camera_count = camera_count
         recorder.ip_address = form["ip_address"]
         recorder.login = form["login"]
-        if form["password"]:
-            recorder.password = form["password"]
+        recorder.password = form["password"]
         recorder.storage_depth = storage_depth
         db.session.commit()
         flash("Данные регистратора обновлены.", "success")
