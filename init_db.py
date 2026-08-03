@@ -45,6 +45,26 @@ with app.app_context():
             "ALTER TABLE buildings ADD COLUMN IF NOT EXISTS building_type VARCHAR(16) NOT NULL DEFAULT 'DOU'"
         )
     )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS time_sync BOOLEAN NOT NULL DEFAULT FALSE"
+        )
+    )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS hdd1_id INTEGER REFERENCES hdds(id)"
+        )
+    )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS hdd2_id INTEGER REFERENCES hdds(id)"
+        )
+    )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS recorder_type VARCHAR(16) NOT NULL DEFAULT ''"
+        )
+    )
     db.session.commit()
 
     admin = User.query.filter_by(username="admin").first()

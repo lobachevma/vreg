@@ -32,6 +32,14 @@ class Building(db.Model):
         return "ДОУ" if self.building_type == "DOU" else "ШКОЛА"
 
 
+class Hdd(db.Model):
+    __tablename__ = "hdds"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(512), unique=True, nullable=False)
+    volume = db.Column(db.String(64), nullable=False)
+
+
 class Recorder(db.Model):
     __tablename__ = "recorders"
 
@@ -44,9 +52,15 @@ class Recorder(db.Model):
     login = db.Column(db.String(256), nullable=False, default="")
     password = db.Column(db.String(256), nullable=False, default="")
     storage_depth = db.Column(db.Integer, nullable=False, default=0)
+    recorder_type = db.Column(db.String(16), nullable=False, default="")
+    time_sync = db.Column(db.Boolean, nullable=False, default=False)
+    hdd1_id = db.Column(db.Integer, db.ForeignKey("hdds.id"), nullable=True)
+    hdd2_id = db.Column(db.Integer, db.ForeignKey("hdds.id"), nullable=True)
     comment = db.Column(db.Text, nullable=False, default="")
 
     building = db.relationship("Building", back_populates="recorders")
+    hdd1 = db.relationship("Hdd", foreign_keys=[hdd1_id])
+    hdd2 = db.relationship("Hdd", foreign_keys=[hdd2_id])
     comments = db.relationship(
         "RecorderComment",
         back_populates="recorder",
@@ -59,6 +73,15 @@ class Recorder(db.Model):
         if self.building:
             return self.building.address
         return self.address
+
+    @property
+    def display_recorder_type(self) -> str:
+        types = {
+            "ANALOG": "Аналоговый",
+            "IP": "IP",
+            "HYBRID": "Гибридный",
+        }
+        return types.get(self.recorder_type, "Не задан")
 
 
 class RecorderComment(db.Model):

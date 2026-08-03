@@ -77,6 +77,40 @@
                 {{ recorder.storage_depth }}
             </dd>
         </div>
+        <div>
+            <dt>Тип регистратора</dt>
+            <dd>{{ recorder.display_recorder_type }}</dd>
+        </div>
+        <div>
+            <dt>HDD 1</dt>
+            <dd>
+                {% if recorder.hdd1 %}
+                {{ recorder.hdd1.name }} ({{ recorder.hdd1.volume }})
+                {% else %}
+                Не выбран
+                {% endif %}
+            </dd>
+        </div>
+        <div>
+            <dt>HDD 2</dt>
+            <dd>
+                {% if recorder.hdd2 %}
+                {{ recorder.hdd2.name }} ({{ recorder.hdd2.volume }})
+                {% else %}
+                Не выбран
+                {% endif %}
+            </dd>
+        </div>
+        <div>
+            <dt>Синхронизация времени</dt>
+            <dd class="time-sync-value">
+                {% if recorder.time_sync %}
+                <span class="time-sync-status time-sync-yes" aria-label="Синхронизация времени включена" title="Включена">✓</span>
+                {% else %}
+                <span class="time-sync-status time-sync-no" aria-label="Синхронизация времени выключена" title="Выключена">✗</span>
+                {% endif %}
+            </dd>
+        </div>
     </dl>
 
     <form method="post" class="comment-form">

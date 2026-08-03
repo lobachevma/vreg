@@ -610,6 +610,12 @@ code {
     gap: 1rem;
 }
 
+.admin-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
 .admin-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -651,6 +657,37 @@ code {
     gap: 0.5rem;
     color: var(--text);
     margin-top: 0.5rem;
+}
+
+.time-sync-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.time-sync-value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.75rem;
+}
+
+.time-sync-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.time-sync-yes {
+    color: #22c55e;
+}
+
+.time-sync-no {
+    color: var(--danger);
 }
 
 .badge {

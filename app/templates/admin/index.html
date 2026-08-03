@@ -11,11 +11,18 @@
 </div>
 
 <div class="admin-grid">
-    <a href="{{ url_for('admin.users') }}" class="admin-card">
-        <h2>Пользователи</h2>
-        <p class="admin-count">{{ users_count }}</p>
-        <p class="subtitle">Создание учётных записей для входа в приложение</p>
-    </a>
+    <div class="admin-column">
+        <a href="{{ url_for('admin.users') }}" class="admin-card">
+            <h2>Пользователи</h2>
+            <p class="admin-count">{{ users_count }}</p>
+            <p class="subtitle">Создание учётных записей для входа в приложение</p>
+        </a>
+        <a href="{{ url_for('admin.hdd') }}" class="admin-card">
+            <h2>Информация о HDD</h2>
+            <p class="admin-count">{{ hdd_count }}</p>
+            <p class="subtitle">Данные о жёстких дисках регистраторов</p>
+        </a>
+    </div>
     <a href="{{ url_for('admin.buildings') }}" class="admin-card">
         <h2>Адреса зданий</h2>
         <p class="admin-count">{{ buildings_count }}</p>

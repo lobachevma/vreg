@@ -42,6 +42,42 @@
     <label for="storage_depth">Глубина хранения (дней)</label>
     <input type="number" id="storage_depth" name="storage_depth" min="0" value="{{ form.get('storage_depth', 0) }}" required>
 
+    <label for="recorder_type">Тип регистратора</label>
+    <select id="recorder_type" name="recorder_type" required>
+        <option value="">Выберите тип</option>
+        <option value="ANALOG" {% if form.get('recorder_type') == 'ANALOG' %}selected{% endif %}>Аналоговый</option>
+        <option value="IP" {% if form.get('recorder_type') == 'IP' %}selected{% endif %}>IP</option>
+        <option value="HYBRID" {% if form.get('recorder_type') == 'HYBRID' %}selected{% endif %}>Гибридный</option>
+    </select>
+
+    <label for="hdd1_id">HDD 1</label>
+    <select id="hdd1_id" name="hdd1_id" {% if not hdds %}disabled{% endif %}>
+        <option value="">Не выбран</option>
+        {% for hdd in hdds %}
+        <option value="{{ hdd.id }}" {% if form.get('hdd1_id')|string == hdd.id|string %}selected{% endif %}>
+            {{ hdd.name }} ({{ hdd.volume }})
+        </option>
+        {% endfor %}
+    </select>
+    {% if not hdds %}
+    <p class="hint">Нет доступных HDD. {% if session.get('is_admin') %}Добавьте их в <a href="{{ url_for('admin.hdd') }}">разделе «Информация о HDD»</a>.{% else %}Обратитесь к администратору.{% endif %}</p>
+    {% endif %}
+
+    <label for="hdd2_id">HDD 2</label>
+    <select id="hdd2_id" name="hdd2_id" {% if not hdds %}disabled{% endif %}>
+        <option value="">Не выбран</option>
+        {% for hdd in hdds %}
+        <option value="{{ hdd.id }}" {% if form.get('hdd2_id')|string == hdd.id|string %}selected{% endif %}>
+            {{ hdd.name }} ({{ hdd.volume }})
+        </option>
+        {% endfor %}
+    </select>
+
+    <label class="checkbox-label">
+        <input type="checkbox" id="time_sync" name="time_sync" {% if form.get('time_sync') %}checked{% endif %}>
+        Синхронизация времени
+    </label>
+
     <button type="submit" class="btn btn-primary" {% if not buildings %}disabled{% endif %}>Сохранить</button>
 </form>
 {% endblock %}

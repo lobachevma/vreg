@@ -14,13 +14,17 @@ from sqlalchemy import func
 
 from app import db
 from app.auth import admin_required, login_required
-from app.models import Building, Recorder, RecorderComment, User
+from app.models import Building, Hdd, Recorder, RecorderComment, User
 
 bp = Blueprint("main", __name__)
 
 
 def _get_buildings():
     return Building.query.order_by(Building.address.asc()).all()
+
+
+def _get_hdds():
+    return Hdd.query.order_by(Hdd.name.asc()).all()
 
 
 @bp.route("/")
@@ -66,11 +70,18 @@ def recorders():
     sort = request.args.get("sort", "id")
     order = request.args.get("order", "desc")
     selected_address = request.args.get("address", "").strip()
+    selected_device = request.args.get("device", "").strip()
 
     query = Recorder.query.outerjoin(Building)
 
     if selected_address:
         query = query.filter(Recorder.address == selected_address)
+
+    if selected_device:
+        if selected_device == "__empty__":
+            query = query.filter(db.or_(Recorder.model.is_(None), Recorder.model == ""))
+        else:
+            query = query.filter(Recorder.model == selected_device)
 
     if sort == "address":
         column = Building.address
@@ -106,9 +117,23 @@ def recorders():
             .all()
             if row[0]
         ],
+        devices=[
+            row[0]
+            for row in Recorder.query.with_entities(Recorder.model)
+            .filter(Recorder.model.isnot(None), Recorder.model != "")
+            .distinct()
+            .order_by(Recorder.model.asc())
+            .all()
+            if row[0]
+        ],
+        has_empty_device=Recorder.query.filter(
+            db.or_(Recorder.model.is_(None), Recorder.model == "")
+        ).count()
+        > 0,
         sort=sort,
         order=order,
         selected_address=selected_address,
+        selected_device=selected_device,
     )
 
 
@@ -175,6 +200,18 @@ def recorder_password(recorder_id):
     return response
 
 
+@bp.route("/recorders/<int:recorder_id>/time-sync", methods=["POST"])
+@login_required
+def recorder_time_sync(recorder_id):
+    recorder = Recorder.query.get_or_404(recorder_id)
+    data = request.get_json(silent=True) or {}
+    recorder.time_sync = bool(data.get("time_sync"))
+    db.session.commit()
+    response = jsonify(time_sync=recorder.time_sync)
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def _parse_recorder_form():
     building_id_raw = request.form.get("building_id", "").strip()
     model = request.form.get("model", "").strip()
@@ -183,6 +220,10 @@ def _parse_recorder_form():
     login = request.form.get("login", "").strip()
     password = request.form.get("password", "").strip()
     storage_depth_raw = request.form.get("storage_depth", "").strip()
+    recorder_type = request.form.get("recorder_type", "").strip().upper()
+    time_sync = request.form.get("time_sync") == "on"
+    hdd1_id_raw = request.form.get("hdd1_id", "").strip()
+    hdd2_id_raw = request.form.get("hdd2_id", "").strip()
 
     form = {
         "building_id": building_id_raw,
@@ -192,10 +233,16 @@ def _parse_recorder_form():
         "login": login,
         "password": password,
         "storage_depth": storage_depth_raw,
+        "recorder_type": recorder_type,
+        "time_sync": time_sync,
+        "hdd1_id": hdd1_id_raw,
+        "hdd2_id": hdd2_id_raw,
     }
 
     errors = []
     building = None
+    hdd1_id = None
+    hdd2_id = None
 
     try:
         building_id = int(building_id_raw)
@@ -225,18 +272,36 @@ def _parse_recorder_form():
     except ValueError:
         errors.append("Глубина хранения должна быть неотрицательным числом.")
 
+    if recorder_type not in {"ANALOG", "IP", "HYBRID"}:
+        errors.append("Выберите тип регистратора.")
+
     camera_count = camera_count if camera_count is not None else 0
 
-    return form, errors, building, camera_count, storage_depth
+    for label, raw in (("HDD 1", hdd1_id_raw), ("HDD 2", hdd2_id_raw)):
+        if not raw:
+            continue
+        try:
+            hdd_id = int(raw)
+            if not Hdd.query.get(hdd_id):
+                raise ValueError
+            if label == "HDD 1":
+                hdd1_id = hdd_id
+            else:
+                hdd2_id = hdd_id
+        except ValueError:
+            errors.append(f"Выберите корректный {label}.")
+
+    return form, errors, building, camera_count, storage_depth, hdd1_id, hdd2_id
 
 
 @bp.route("/recorders/add", methods=["GET", "POST"])
 @admin_required
 def add_recorder():
     buildings = _get_buildings()
+    hdds = _get_hdds()
 
     if request.method == "POST":
-        form, errors, building, camera_count, storage_depth = _parse_recorder_form()
+        form, errors, building, camera_count, storage_depth, hdd1_id, hdd2_id = _parse_recorder_form()
 
         if errors:
             for error in errors:
@@ -245,6 +310,7 @@ def add_recorder():
                 "recorder_form.html",
                 form=form,
                 buildings=buildings,
+                hdds=hdds,
                 title="Добавить регистратор",
                 action=url_for("main.add_recorder"),
             )
@@ -258,6 +324,10 @@ def add_recorder():
             login=form["login"],
             password=form["password"],
             storage_depth=storage_depth,
+            recorder_type=form["recorder_type"],
+            time_sync=form["time_sync"],
+            hdd1_id=hdd1_id,
+            hdd2_id=hdd2_id,
         )
         db.session.add(recorder)
         db.session.commit()
@@ -271,6 +341,7 @@ def add_recorder():
         "recorder_form.html",
         form={},
         buildings=buildings,
+        hdds=hdds,
         title="Добавить регистратор",
         action=url_for("main.add_recorder"),
     )
@@ -281,9 +352,10 @@ def add_recorder():
 def edit_recorder(recorder_id):
     recorder = Recorder.query.get_or_404(recorder_id)
     buildings = _get_buildings()
+    hdds = _get_hdds()
 
     if request.method == "POST":
-        form, errors, building, camera_count, storage_depth = _parse_recorder_form()
+        form, errors, building, camera_count, storage_depth, hdd1_id, hdd2_id = _parse_recorder_form()
 
         if errors:
             for error in errors:
@@ -292,6 +364,7 @@ def edit_recorder(recorder_id):
                 "recorder_form.html",
                 form=form,
                 buildings=buildings,
+                hdds=hdds,
                 title="Редактировать регистратор",
                 action=url_for("main.edit_recorder", recorder_id=recorder.id),
             )
@@ -304,6 +377,10 @@ def edit_recorder(recorder_id):
         recorder.login = form["login"]
         recorder.password = form["password"]
         recorder.storage_depth = storage_depth
+        recorder.recorder_type = form["recorder_type"]
+        recorder.time_sync = form["time_sync"]
+        recorder.hdd1_id = hdd1_id
+        recorder.hdd2_id = hdd2_id
         db.session.commit()
         flash("Данные регистратора обновлены.", "success")
         return redirect(url_for("main.recorders"))
@@ -318,8 +395,13 @@ def edit_recorder(recorder_id):
             "login": recorder.login,
             "password": recorder.password,
             "storage_depth": recorder.storage_depth,
+            "recorder_type": recorder.recorder_type,
+            "time_sync": recorder.time_sync,
+            "hdd1_id": recorder.hdd1_id or "",
+            "hdd2_id": recorder.hdd2_id or "",
         },
         buildings=buildings,
+        hdds=hdds,
         title="Редактировать регистратор",
         action=url_for("main.edit_recorder", recorder_id=recorder.id),
     )

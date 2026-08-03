@@ -17,6 +17,22 @@
                 </option>
                 {% endfor %}
             </select>
+
+            <label for="device" class="filter-label">Фильтр по устройству</label>
+            <select id="device" name="device" onchange="this.form.submit()">
+                <option value="">Все устройства</option>
+                {% if has_empty_device %}
+                <option value="__empty__" {% if selected_device == '__empty__' %}selected{% endif %}>
+                    Без модели
+                </option>
+                {% endif %}
+                {% for device in devices %}
+                <option value="{{ device }}" {% if selected_device == device %}selected{% endif %}>
+                    {{ device }}
+                </option>
+                {% endfor %}
+            </select>
+
             <noscript><button type="submit" class="btn btn-secondary btn-sm">Применить</button></noscript>
             {% if sort %}
             <input type="hidden" name="sort" value="{{ sort }}">
@@ -41,7 +57,7 @@
                 <th>№</th>
                 <th class="sortable">
                     {% set address_order = 'desc' if sort == 'address' and order == 'asc' else 'asc' %}
-                    <a href="{{ url_for('main.recorders', sort='address', order=address_order, address=selected_address) }}"
+                    <a href="{{ url_for('main.recorders', sort='address', order=address_order, address=selected_address, device=selected_device) }}"
                        class="sort-link{% if sort == 'address' %} active{% endif %}">
                         Адрес
                         {% if sort == 'address' %}
@@ -54,6 +70,7 @@
                 <th>IP адрес</th>
                 <th>Логин</th>
                 <th>Глубина хранения</th>
+                <th>Синхронизация времени</th>
                 <th>КОМЕНТАРИИ</th>
             </tr>
         </thead>
@@ -67,6 +84,13 @@
                 <td><code>{{ recorder.ip_address }}</code></td>
                 <td>{{ recorder.login }}</td>
                 <td class="{% if recorder.storage_depth < 30 %}storage-low{% else %}storage-ok{% endif %}">{{ recorder.storage_depth }}</td>
+                <td class="time-sync-cell">
+                    {% if recorder.time_sync %}
+                    <span class="time-sync-status time-sync-yes" aria-label="Синхронизация времени включена" title="Включена">✓</span>
+                    {% else %}
+                    <span class="time-sync-status time-sync-no" aria-label="Синхронизация времени выключена" title="Выключена">✗</span>
+                    {% endif %}
+                </td>
                 <td>{{ comment_counts.get(recorder.id, 0) }}</td>
             </tr>
             {% endfor %}

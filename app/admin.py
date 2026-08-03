@@ -2,7 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 
 from app import db
 from app.auth import admin_required
-from app.models import Building, Recorder, User
+from app.models import Building, Hdd, Recorder, User
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -12,10 +12,12 @@ bp = Blueprint("admin", __name__, url_prefix="/admin")
 def index():
     users_count = User.query.count()
     buildings_count = Building.query.count()
+    hdd_count = Hdd.query.count()
     return render_template(
         "admin/index.html",
         users_count=users_count,
         buildings_count=buildings_count,
+        hdd_count=hdd_count,
     )
 
 
@@ -119,3 +121,53 @@ def delete_building(building_id):
     db.session.commit()
     flash(f"Адрес «{address}» удалён.", "success")
     return redirect(url_for("admin.buildings"))
+
+
+@bp.route("/hdd")
+@admin_required
+def hdd():
+    items = Hdd.query.order_by(Hdd.name.asc()).all()
+    return render_template("admin/hdd.html", hdds=items)
+
+
+@bp.route("/hdd/add", methods=["POST"])
+@admin_required
+def add_hdd():
+    name = request.form.get("name", "").strip()
+    volume = request.form.get("volume", "").strip()
+
+    if not name:
+        flash("Укажите название HDD.", "danger")
+        return redirect(url_for("admin.hdd"))
+
+    if not volume:
+        flash("Укажите объём HDD.", "danger")
+        return redirect(url_for("admin.hdd"))
+
+    if Hdd.query.filter_by(name=name).first():
+        flash("HDD с таким названием уже существует.", "danger")
+        return redirect(url_for("admin.hdd"))
+
+    item = Hdd(name=name, volume=volume)
+    db.session.add(item)
+    db.session.commit()
+    flash(f"HDD «{name}» добавлен.", "success")
+    return redirect(url_for("admin.hdd"))
+
+
+@bp.route("/hdd/<int:hdd_id>/delete", methods=["POST"])
+@admin_required
+def delete_hdd(hdd_id):
+    item = Hdd.query.get_or_404(hdd_id)
+
+    if Recorder.query.filter(
+        db.or_(Recorder.hdd1_id == item.id, Recorder.hdd2_id == item.id)
+    ).first():
+        flash("Нельзя удалить HDD, используемый в регистраторах.", "danger")
+        return redirect(url_for("admin.hdd"))
+
+    name = item.name
+    db.session.delete(item)
+    db.session.commit()
+    flash(f"HDD «{name}» удалён.", "success")
+    return redirect(url_for("admin.hdd"))

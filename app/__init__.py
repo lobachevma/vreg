@@ -9,7 +9,10 @@ db = SQLAlchemy()
 
 def create_app():
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+    secret_key = os.environ.get("SECRET_KEY")
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY is required")
+    app.config["SECRET_KEY"] = secret_key
     app.config["SESSION_IDLE_TIMEOUT_SECONDS"] = 300
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
         "DATABASE_URL",
