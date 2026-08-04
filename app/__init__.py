@@ -22,6 +22,11 @@ def create_app():
 
     db.init_app(app)
 
+    with app.app_context():
+        from app.system_settings import apply_session_timeout_to_app
+
+        apply_session_timeout_to_app(app)
+
     @app.before_request
     def refresh_session_state():
         from flask import flash, redirect, request, session, url_for

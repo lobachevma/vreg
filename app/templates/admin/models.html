@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Модели регистраторов — VReg{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Модели регистраторов</h1>
+        <p class="subtitle">Справочник моделей видеорегистраторов</p>
+    </div>
+    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">Назад</a>
+</div>
+
+<form method="post" action="{{ url_for('admin.add_model') }}" class="form card admin-form">
+    <h2>Новая модель</h2>
+    <label for="name">Название модели</label>
+    <input type="text" id="name" name="name" required placeholder="NVR-416M-K">
+
+    <label for="camera_capacity">Количество камер</label>
+    <select id="camera_capacity" name="camera_capacity" required>
+        <option value="">Выберите количество</option>
+        {% for option in camera_capacity_options %}
+        <option value="{{ option }}">{{ option }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="recorder_type">Тип регистратора</label>
+    <select id="recorder_type" name="recorder_type" required>
+        <option value="">Выберите тип</option>
+        {% for value, label in recorder_type_choices %}
+        <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="hdd_count">Количество HDD</label>
+    <select id="hdd_count" name="hdd_count" required>
+        <option value="">Выберите количество</option>
+        {% for option in hdd_count_options %}
+        <option value="{{ option }}">{{ option }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="btn btn-primary">Добавить модель</button>
+</form>
+
+{% if models %}
+<div class="table-wrap">
+    <table class="models-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название модели</th>
+                <th>Количество камер</th>
+                <th>Тип регистратора</th>
+                <th>Количество HDD</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for model in models %}
+            <tr>
+                <td>{{ model.id }}</td>
+                <td>
+                    <input type="text"
+                           name="name"
+                           form="model-form-{{ model.id }}"
+                           value="{{ model.name }}"
+                           required
+                           class="table-input">
+                </td>
+                <td>
+                    <select name="camera_capacity" form="model-form-{{ model.id }}" required class="table-select">
+                        <option value="">—</option>
+                        {% for option in camera_capacity_options %}
+                        <option value="{{ option }}" {% if model.camera_capacity == option %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <select name="recorder_type" form="model-form-{{ model.id }}" required class="table-select">
+                        <option value="">—</option>
+                        {% for value, label in recorder_type_choices %}
+                        <option value="{{ value }}" {% if model.recorder_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <select name="hdd_count" form="model-form-{{ model.id }}" required class="table-select">
+                        <option value="">—</option>
+                        {% for option in hdd_count_options %}
+                        <option value="{{ option }}" {% if model.hdd_count == option %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="actions model-actions">
+                    <form id="model-form-{{ model.id }}" method="post" action="{{ url_for('admin.edit_model', model_id=model.id) }}"></form>
+                    <button type="submit" form="model-form-{{ model.id }}" class="btn btn-primary btn-sm">Сохранить</button>
+                    <form method="post" action="{{ url_for('admin.delete_model', model_id=model.id) }}" onsubmit="return confirm('Удалить модель?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Моделей пока нет.</p>
+</div>
+{% endif %}
+{% endblock %}

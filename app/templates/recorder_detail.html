@@ -81,26 +81,20 @@
             <dt>Тип регистратора</dt>
             <dd>{{ recorder.display_recorder_type }}</dd>
         </div>
+        {% for slot, hdd in ((1, recorder.hdd1), (2, recorder.hdd2), (3, recorder.hdd3), (4, recorder.hdd4)) %}
+        {% if hdd or slot <= (recorder.catalog_hdd_count|default(2)) %}
         <div>
-            <dt>HDD 1</dt>
+            <dt>HDD {{ slot }}</dt>
             <dd>
-                {% if recorder.hdd1 %}
-                {{ recorder.hdd1.name }} ({{ recorder.hdd1.volume }})
+                {% if hdd %}
+                {{ hdd.name }} ({{ hdd.volume }})
                 {% else %}
                 Не выбран
                 {% endif %}
             </dd>
         </div>
-        <div>
-            <dt>HDD 2</dt>
-            <dd>
-                {% if recorder.hdd2 %}
-                {{ recorder.hdd2.name }} ({{ recorder.hdd2.volume }})
-                {% else %}
-                Не выбран
-                {% endif %}
-            </dd>
-        </div>
+        {% endif %}
+        {% endfor %}
         <div>
             <dt>Синхронизация времени</dt>
             <dd class="time-sync-value">

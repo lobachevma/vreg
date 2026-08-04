@@ -24,8 +24,36 @@
     <p class="hint">Нет доступных адресов. {% if session.get('is_admin') %}Добавьте их в <a href="{{ url_for('admin.buildings') }}">админ-панели</a>.{% else %}Обратитесь к администратору.{% endif %}</p>
     {% endif %}
 
+    <label for="recorder_model_id">Модель из справочника</label>
+    <select id="recorder_model_id" {% if not recorder_models %}disabled{% endif %}>
+        <option value="">Выберите модель</option>
+        {% for recorder_model in recorder_models %}
+        <option value="{{ recorder_model.id }}"
+                data-name="{{ recorder_model.name }}"
+                data-camera-capacity="{{ recorder_model.camera_capacity or '' }}"
+                data-recorder-type="{{ recorder_model.recorder_type }}"
+                data-recorder-type-label="{{ recorder_model.display_recorder_type }}"
+                data-hdd-count="{{ recorder_model.hdd_count }}"
+                {% if selected_recorder_model_id|default('')|string == recorder_model.id|string %}selected{% endif %}>
+            {{ recorder_model.name }}
+        </option>
+        {% endfor %}
+    </select>
+    {% if not recorder_models %}
+    <p class="hint">Справочник моделей пуст. {% if session.get('is_admin') %}Добавьте модели в <a href="{{ url_for('admin.models') }}">разделе «Модели регистраторов»</a>.{% else %}Обратитесь к администратору.{% endif %}</p>
+    {% endif %}
+
     <label for="model">Модель регистратора</label>
     <input type="text" id="model" name="model" value="{{ form.get('model', '') }}">
+
+    <label for="camera_capacity_display">Количество камер</label>
+    <input type="text"
+           id="camera_capacity_display"
+           value="{{ form.get('camera_capacity', '') }}"
+           readonly
+           tabindex="-1"
+           placeholder="Выберите модель из справочника">
+    <input type="hidden" id="camera_capacity" name="camera_capacity" value="{{ form.get('camera_capacity', '') }}">
 
     <label for="camera_count">Количество подключенных камер</label>
     <input type="number" id="camera_count" name="camera_count" min="0" value="{{ form.get('camera_count', 0) }}">
@@ -42,36 +70,31 @@
     <label for="storage_depth">Глубина хранения (дней)</label>
     <input type="number" id="storage_depth" name="storage_depth" min="0" value="{{ form.get('storage_depth', 0) }}" required>
 
-    <label for="recorder_type">Тип регистратора</label>
-    <select id="recorder_type" name="recorder_type" required>
-        <option value="">Выберите тип</option>
-        <option value="ANALOG" {% if form.get('recorder_type') == 'ANALOG' %}selected{% endif %}>Аналоговый</option>
-        <option value="IP" {% if form.get('recorder_type') == 'IP' %}selected{% endif %}>IP</option>
-        <option value="HYBRID" {% if form.get('recorder_type') == 'HYBRID' %}selected{% endif %}>Гибридный</option>
-    </select>
+    <label for="recorder_type_display">Тип регистратора</label>
+    <input type="text"
+           id="recorder_type_display"
+           value="{% if form.get('recorder_type') == 'ANALOG' %}Аналоговый{% elif form.get('recorder_type') == 'IP' %}IP{% elif form.get('recorder_type') == 'HYBRID' %}Гибридный{% endif %}"
+           readonly
+           tabindex="-1"
+           placeholder="Выберите модель из справочника">
+    <input type="hidden" id="recorder_type" name="recorder_type" value="{{ form.get('recorder_type', '') }}">
 
-    <label for="hdd1_id">HDD 1</label>
-    <select id="hdd1_id" name="hdd1_id" {% if not hdds %}disabled{% endif %}>
-        <option value="">Не выбран</option>
-        {% for hdd in hdds %}
-        <option value="{{ hdd.id }}" {% if form.get('hdd1_id')|string == hdd.id|string %}selected{% endif %}>
-            {{ hdd.name }} ({{ hdd.volume }})
-        </option>
-        {% endfor %}
-    </select>
-    {% if not hdds %}
-    <p class="hint">Нет доступных HDD. {% if session.get('is_admin') %}Добавьте их в <a href="{{ url_for('admin.hdd') }}">разделе «Информация о HDD»</a>.{% else %}Обратитесь к администратору.{% endif %}</p>
-    {% endif %}
-
-    <label for="hdd2_id">HDD 2</label>
-    <select id="hdd2_id" name="hdd2_id" {% if not hdds %}disabled{% endif %}>
-        <option value="">Не выбран</option>
-        {% for hdd in hdds %}
-        <option value="{{ hdd.id }}" {% if form.get('hdd2_id')|string == hdd.id|string %}selected{% endif %}>
-            {{ hdd.name }} ({{ hdd.volume }})
-        </option>
-        {% endfor %}
-    </select>
+    {% for slot in range(1, 5) %}
+    <div class="hdd-field" data-hdd-slot="{{ slot }}" {% if slot > visible_hdd_count|default(0) %}hidden{% endif %}>
+        <label for="hdd{{ slot }}_id">HDD {{ slot }}</label>
+        <select id="hdd{{ slot }}_id" name="hdd{{ slot }}_id" {% if not hdds %}disabled data-no-hdds{% endif %}>
+            <option value="">Не выбран</option>
+            {% for hdd in hdds %}
+            <option value="{{ hdd.id }}" {% if form.get('hdd' ~ slot ~ '_id')|string == hdd.id|string %}selected{% endif %}>
+                {{ hdd.name }} ({{ hdd.volume }})
+            </option>
+            {% endfor %}
+        </select>
+        {% if slot == 1 and not hdds %}
+        <p class="hint">Нет доступных HDD. {% if session.get('is_admin') %}Добавьте их в <a href="{{ url_for('admin.hdd') }}">разделе «Информация о HDD»</a>.{% else %}Обратитесь к администратору.{% endif %}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
 
     <label class="checkbox-label">
         <input type="checkbox" id="time_sync" name="time_sync" {% if form.get('time_sync') %}checked{% endif %}>
@@ -80,4 +103,77 @@
 
     <button type="submit" class="btn btn-primary" {% if not buildings %}disabled{% endif %}>Сохранить</button>
 </form>
+
+<script>
+    window.addEventListener("DOMContentLoaded", function () {
+        const catalogSelect = document.getElementById("recorder_model_id");
+        const modelInput = document.getElementById("model");
+        const cameraCapacityInput = document.getElementById("camera_capacity");
+        const cameraCapacityDisplay = document.getElementById("camera_capacity_display");
+        const recorderTypeInput = document.getElementById("recorder_type");
+        const recorderTypeDisplay = document.getElementById("recorder_type_display");
+        const hddFields = document.querySelectorAll(".hdd-field");
+
+        function setCameraCapacity(value) {
+            const normalized = value ? String(value) : "";
+            cameraCapacityInput.value = normalized;
+            cameraCapacityDisplay.value = normalized;
+        }
+
+        function setRecorderType(value, label) {
+            const normalized = value ? String(value) : "";
+            recorderTypeInput.value = normalized;
+            recorderTypeDisplay.value = label || "";
+        }
+
+        function setVisibleHddCount(count) {
+            const visibleCount = parseInt(count, 10) || 0;
+            hddFields.forEach(function (field) {
+                const slot = parseInt(field.dataset.hddSlot, 10);
+                const select = field.querySelector("select");
+                const show = slot <= visibleCount;
+                field.hidden = !show;
+                if (select) {
+                    select.disabled = !show || select.hasAttribute("data-no-hdds");
+                    if (!show) {
+                        select.value = "";
+                    }
+                }
+            });
+        }
+
+        if (!catalogSelect) return;
+
+        catalogSelect.addEventListener("change", function () {
+            const option = catalogSelect.options[catalogSelect.selectedIndex];
+            if (!option || !option.value) {
+                setVisibleHddCount(0);
+                setCameraCapacity("");
+                setRecorderType("", "");
+                return;
+            }
+
+            modelInput.value = option.dataset.name || "";
+            setCameraCapacity(option.dataset.cameraCapacity || "");
+            setRecorderType(
+                option.dataset.recorderType || "",
+                option.dataset.recorderTypeLabel || ""
+            );
+            setVisibleHddCount(option.dataset.hddCount);
+        });
+
+        const selectedOption = catalogSelect.options[catalogSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            modelInput.value = selectedOption.dataset.name || modelInput.value;
+            setCameraCapacity(selectedOption.dataset.cameraCapacity || cameraCapacityInput.value);
+            setRecorderType(
+                selectedOption.dataset.recorderType || recorderTypeInput.value,
+                selectedOption.dataset.recorderTypeLabel || recorderTypeDisplay.value
+            );
+            setVisibleHddCount(selectedOption.dataset.hddCount);
+        } else {
+            setVisibleHddCount({{ visible_hdd_count|default(0) }});
+        }
+    });
+</script>
 {% endblock %}

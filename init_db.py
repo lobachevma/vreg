@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import Building, Recorder, RecorderComment, User
+from app.models import Building, Recorder, RecorderComment, SystemSetting, User
 import os
 
 from sqlalchemy import text
@@ -65,6 +65,36 @@ with app.app_context():
             "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS recorder_type VARCHAR(16) NOT NULL DEFAULT ''"
         )
     )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS camera_capacity INTEGER"
+        )
+    )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorder_models ADD COLUMN IF NOT EXISTS camera_capacity INTEGER"
+        )
+    )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorder_models ADD COLUMN IF NOT EXISTS recorder_type VARCHAR(16) NOT NULL DEFAULT ''"
+        )
+    )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorder_models ADD COLUMN IF NOT EXISTS hdd_count INTEGER NOT NULL DEFAULT 2"
+        )
+    )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS hdd3_id INTEGER REFERENCES hdds(id)"
+        )
+    )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS hdd4_id INTEGER REFERENCES hdds(id)"
+        )
+    )
     db.session.commit()
 
     admin = User.query.filter_by(username="admin").first()
@@ -110,6 +140,9 @@ with app.app_context():
 
     for recorder in Recorder.query.filter(Recorder.password.is_(None)).all():
         recorder.password = ""
+
+    if not SystemSetting.query.filter_by(key="session_idle_timeout_seconds").first():
+        db.session.add(SystemSetting(key="session_idle_timeout_seconds", value="300"))
 
     db.session.commit()
 
