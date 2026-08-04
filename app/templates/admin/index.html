@@ -17,28 +17,19 @@
             <p class="admin-count">{{ users_count }}</p>
             <p class="subtitle">Создание учётных записей для входа в приложение</p>
         </a>
-        <a href="{{ url_for('admin.hdd') }}" class="admin-card">
-            <h2>Информация о HDD</h2>
-            <p class="admin-count">{{ hdd_count }}</p>
-            <p class="subtitle">Данные о жёстких дисках регистраторов</p>
-        </a>
-        <a href="{{ url_for('admin.models') }}" class="admin-card">
-            <h2>Модели регистраторов</h2>
-            <p class="admin-count">{{ models_count }}</p>
-            <p class="subtitle">Справочник моделей видеорегистраторов</p>
-        </a>
-    </div>
-    <div class="admin-column">
-        <a href="{{ url_for('admin.buildings') }}" class="admin-card">
-            <h2>Адреса зданий</h2>
-            <p class="admin-count">{{ buildings_count }}</p>
-            <p class="subtitle">Справочник адресов для регистраторов</p>
-        </a>
         <a href="{{ url_for('admin.settings') }}" class="admin-card">
             <h2>Настройки системы</h2>
             <p class="admin-count" aria-hidden="true">&nbsp;</p>
             <p class="subtitle">Параметры работы приложения</p>
         </a>
     </div>
+    <section class="admin-section">
+        <h2>Справочники</h2>
+        <div class="admin-directory">
+            <a href="{{ url_for('admin.models') }}" class="btn btn-secondary">Модели регистраторов</a>
+            <a href="{{ url_for('admin.hdd') }}" class="btn btn-secondary">Модели HDD</a>
+            <a href="{{ url_for('admin.buildings') }}" class="btn btn-secondary">Адреса зданий</a>
+        </div>
+    </section>
 </div>
 {% endblock %}

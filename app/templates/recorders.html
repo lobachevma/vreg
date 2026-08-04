@@ -33,6 +33,13 @@
                 {% endfor %}
             </select>
 
+            <label for="building_type" class="filter-label">Тип здания</label>
+            <select id="building_type" name="building_type" onchange="this.form.submit()">
+                <option value="">Все типы</option>
+                <option value="DOU" {% if selected_building_type == 'DOU' %}selected{% endif %}>ДОУ</option>
+                <option value="SCHOOL" {% if selected_building_type == 'SCHOOL' %}selected{% endif %}>ШКОЛА</option>
+            </select>
+
             <noscript><button type="submit" class="btn btn-secondary btn-sm">Применить</button></noscript>
             {% if sort %}
             <input type="hidden" name="sort" value="{{ sort }}">
@@ -57,7 +64,7 @@
                 <th>№</th>
                 <th class="sortable">
                     {% set address_order = 'desc' if sort == 'address' and order == 'asc' else 'asc' %}
-                    <a href="{{ url_for('main.recorders', sort='address', order=address_order, address=selected_address, device=selected_device) }}"
+                    <a href="{{ url_for('main.recorders', sort='address', order=address_order, address=selected_address, device=selected_device, building_type=selected_building_type) }}"
                        class="sort-link{% if sort == 'address' %} active{% endif %}">
                         Адрес
                         {% if sort == 'address' %}

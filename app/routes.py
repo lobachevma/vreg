@@ -97,6 +97,7 @@ def recorders():
     order = request.args.get("order", "desc")
     selected_address = request.args.get("address", "").strip()
     selected_device = request.args.get("device", "").strip()
+    selected_building_type = request.args.get("building_type", "").strip().upper()
 
     query = Recorder.query.outerjoin(Building)
 
@@ -108,6 +109,9 @@ def recorders():
             query = query.filter(db.or_(Recorder.model.is_(None), Recorder.model == ""))
         else:
             query = query.filter(Recorder.model == selected_device)
+
+    if selected_building_type in {"DOU", "SCHOOL"}:
+        query = query.filter(Building.building_type == selected_building_type)
 
     if sort == "address":
         column = Building.address
@@ -160,6 +164,7 @@ def recorders():
         order=order,
         selected_address=selected_address,
         selected_device=selected_device,
+        selected_building_type=selected_building_type,
     )
 
 

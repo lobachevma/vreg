@@ -91,7 +91,7 @@
             {% endfor %}
         </select>
         {% if slot == 1 and not hdds %}
-        <p class="hint">Нет доступных HDD. {% if session.get('is_admin') %}Добавьте их в <a href="{{ url_for('admin.hdd') }}">разделе «Информация о HDD»</a>.{% else %}Обратитесь к администратору.{% endif %}</p>
+        <p class="hint">Нет доступных HDD. {% if session.get('is_admin') %}Добавьте их в <a href="{{ url_for('admin.hdd') }}">разделе «Модели HDD»</a>.{% else %}Обратитесь к администратору.{% endif %}</p>
         {% endif %}
     </div>
     {% endfor %}
