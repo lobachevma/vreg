@@ -7,14 +7,54 @@
     <h1>VReg</h1>
     <p class="subtitle">Учёт видеорегистраторов</p>
 
-    <form method="post" class="form">
+    <form method="post" class="form" id="login-form" autocomplete="on">
         <label for="username">Логин</label>
-        <input type="text" id="username" name="username" required autofocus>
+        <input type="text" id="username" name="username" autocomplete="username" required autofocus>
 
         <label for="password">Пароль</label>
-        <input type="password" id="password" name="password" required>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+
+        <label class="checkbox-label">
+            <input type="checkbox" id="remember_password" name="remember_password">
+            Сохранить пароль
+        </label>
 
         <button type="submit" class="btn btn-primary">Войти</button>
     </form>
 </div>
+
+<script>
+    window.addEventListener("DOMContentLoaded", function () {
+        const storageKey = "vreg_saved_login";
+        const form = document.getElementById("login-form");
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
+        const rememberCheckbox = document.getElementById("remember_password");
+
+        try {
+            const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+            if (saved && saved.username && saved.password) {
+                usernameInput.value = saved.username;
+                passwordInput.value = saved.password;
+                rememberCheckbox.checked = true;
+            }
+        } catch (error) {
+            localStorage.removeItem(storageKey);
+        }
+
+        form.addEventListener("submit", function () {
+            if (rememberCheckbox.checked) {
+                localStorage.setItem(
+                    storageKey,
+                    JSON.stringify({
+                        username: usernameInput.value,
+                        password: passwordInput.value,
+                    })
+                );
+            } else {
+                localStorage.removeItem(storageKey);
+            }
+        });
+    });
+</script>
 {% endblock %}

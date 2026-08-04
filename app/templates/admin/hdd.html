@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Модели HDD — VReg{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Модели HDD</h1>
+        <p class="subtitle">Справочник жёстких дисков</p>
+    </div>
+    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">Назад</a>
+</div>
+
+<form method="post" action="{{ url_for('admin.add_hdd') }}" class="form card admin-form">
+    <h2>Новый HDD</h2>
+    <label for="name">Название HDD</label>
+    <input type="text" id="name" name="name" required placeholder="WD Purple 2TB">
+
+    <label for="volume">Объём HDD</label>
+    <input type="text" id="volume" name="volume" required placeholder="2 ТБ">
+
+    <button type="submit" class="btn btn-primary">Добавить HDD</button>
+</form>
+
+{% if hdds %}
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название HDD</th>
+                <th>Объём HDD</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for hdd in hdds %}
+            <tr>
+                <td>{{ hdd.id }}</td>
+                <td>{{ hdd.name }}</td>
+                <td>{{ hdd.volume }}</td>
+                <td class="actions">
+                    <form method="post" action="{{ url_for('admin.delete_hdd', hdd_id=hdd.id) }}" onsubmit="return confirm('Удалить HDD?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>HDD пока нет.</p>
+</div>
+{% endif %}
+{% endblock %}

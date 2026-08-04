@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Настройки системы — VReg{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Настройки системы</h1>
+        <p class="subtitle">Параметры работы приложения</p>
+    </div>
+    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">Назад</a>
+</div>
+
+<form method="post" action="{{ url_for('admin.settings') }}" class="form card admin-form">
+    <h2>Сессия</h2>
+    <label for="timeout_minutes">Таймаут сессии (мин)</label>
+    <input type="number"
+           id="timeout_minutes"
+           name="timeout_minutes"
+           min="{{ min_timeout_minutes }}"
+           max="{{ max_timeout_minutes }}"
+           value="{{ timeout_minutes }}"
+           required>
+    <p class="hint">
+        Пользователь будет автоматически выведен из системы после указанного времени бездействия.
+        Допустимый диапазон: {{ min_timeout_minutes }}–{{ max_timeout_minutes }} мин.
+        Текущее значение: {{ timeout_seconds }} сек.
+    </p>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+</form>
+{% endblock %}
