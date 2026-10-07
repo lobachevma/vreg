@@ -1,0 +1,10 @@
+# Example production overlay (copy to docker-compose.prod.yml and adjust).
+# Binds the app to a specific host IP/port; uses Gunicorn from the default entrypoint.
+#
+#   cp docker-compose.prod.example.yml docker-compose.prod.yml
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+services:
+  web:
+    ports:
+      - "94.102.88.15:80:8000"
