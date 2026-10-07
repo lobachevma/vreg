@@ -1,0 +1,13 @@
+# Local development: source bind-mount + Flask dev server with reload.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# Or:    ./scripts/docker-dev-up.sh
+
+services:
+  web:
+    ports:
+      - "${WEB_PUBLISH:-8000:8000}"
+    volumes:
+      - .:/app
+    environment:
+      FLASK_DEBUG: "1"
+    entrypoint: ["./entrypoint.dev.sh"]

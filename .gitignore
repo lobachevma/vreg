@@ -4,3 +4,4 @@ __pycache__/
 .venv/
 terminals/
 *.sqlite3
+docker-compose.prod.yml

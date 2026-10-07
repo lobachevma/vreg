@@ -1,0 +1,27 @@
+{
+  "name": "VReg (Flask + PostgreSQL)",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "../docker-compose.dev.yml"
+  ],
+  "service": "web",
+  "workspaceFolder": "/app",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "VReg web",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "pip install --no-cache-dir -r requirements.txt",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  }
+}

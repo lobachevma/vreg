@@ -1,5 +1,12 @@
 __pycache__
 *.pyc
+*.pyo
 .env
 .git
-.env
+.gitignore
+.devcontainer
+docker-compose*.yml
+scripts
+README.md
+internal
+docs

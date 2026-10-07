@@ -16,7 +16,7 @@ services:
   web:
     build: .
     ports:
-      - "94.102.88.15:80:8000"
+      - "${WEB_PUBLISH:-8000:8000}"
     environment:
       DATABASE_URL: postgresql://vreg:vreg@db:5432/vreg
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}

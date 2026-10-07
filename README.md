@@ -11,7 +11,31 @@
 docker compose up -d --build
 ```
 
-Приложение будет доступно по адресу: http://localhost
+Приложение будет доступно по адресу: http://localhost:8000 (порт задаётся переменной `WEB_PUBLISH`, по умолчанию `8000:8000`).
+
+### Разработка в Docker (hot reload)
+
+Исходники монтируются в контейнер, приложение стартует через Flask с `--reload`:
+
+```bash
+./scripts/docker-dev-up.sh
+# или: make dev-up
+# или: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+Остановка: `./scripts/docker-dev-down.sh` или `make dev-down`.
+
+Shell в контейнере: `./scripts/docker-dev-shell.sh`.
+
+Подробнее: [docs/docker-workflow.md](docs/docker-workflow.md), `docker-compose.dev.yml`, `.devcontainer/`.
+
+### Production на выделенном IP
+
+Скопируйте `docker-compose.prod.example.yml` в `docker-compose.prod.yml`, отредактируйте привязку порта и запустите:
+
+```bash
+./scripts/docker-prod-up.sh
+```
 
 ## Вход
 
