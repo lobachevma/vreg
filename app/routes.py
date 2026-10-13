@@ -14,6 +14,7 @@ from sqlalchemy import func
 
 from app import db
 from app.auth import admin_required, login_required
+from app.connectivity import recorder_online_cached
 from app.models import Building, Hdd, Recorder, RecorderComment, RecorderModel, User
 
 bp = Blueprint("main", __name__)
@@ -220,6 +221,16 @@ def recorder_detail(recorder_id):
         for comment in recorder.comments
     ]
     return render_template("recorder_detail.html", recorder=recorder, comments=comments)
+
+
+@bp.route("/recorders/<int:recorder_id>/online")
+@login_required
+def recorder_online(recorder_id):
+    recorder = Recorder.query.get_or_404(recorder_id)
+    online = recorder_online_cached(recorder.id, recorder.ip_address)
+    response = jsonify(online=online)
+    response.headers["Cache-Control"] = "private, max-age=60"
+    return response
 
 
 @bp.route("/recorders/<int:recorder_id>/password")

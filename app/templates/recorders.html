@@ -75,6 +75,7 @@
                 <th>Модель</th>
                 <th>Камеры</th>
                 <th>IP адрес</th>
+                <th>В сети</th>
                 <th>Логин</th>
                 <th>Глубина хранения</th>
                 <th>Синхронизация времени</th>
@@ -89,6 +90,15 @@
                 <td>{{ recorder.model }}</td>
                 <td>{{ recorder.camera_count }}</td>
                 <td><code>{{ recorder.ip_address }}</code></td>
+                <td class="online-status-cell">
+                    <span class="online-status"
+                          data-online-url="{{ url_for('main.recorder_online', recorder_id=recorder.id) }}"
+                          data-state="loading"
+                          aria-label="Проверка связи">
+                        <span class="online-dot online-dot--unknown" aria-hidden="true"></span>
+                        <span class="online-label">…</span>
+                    </span>
+                </td>
                 <td>{{ recorder.login }}</td>
                 <td class="{% if recorder.storage_depth < 30 %}storage-low{% else %}storage-ok{% endif %}">{{ recorder.storage_depth }}</td>
                 <td class="time-sync-cell">
@@ -113,6 +123,7 @@
 </div>
 {% endif %}
 
+<script src="{{ url_for('static', filename='online_status.js') }}"></script>
 <script>
     window.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".recorder-row").forEach(function (row) {

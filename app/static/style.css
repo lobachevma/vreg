@@ -16,6 +16,9 @@
     --warning-text: #fcd34d;
     --info-bg: #1e3a5f;
     --info-text: #93c5fd;
+    --online-status-online: #22c55e;
+    --online-status-offline: var(--danger);
+    --online-status-unknown: var(--muted);
 }
 
 * {
@@ -769,6 +772,44 @@ code {
 
 .time-sync-no {
     color: var(--danger);
+}
+
+.online-status-cell {
+    vertical-align: middle;
+}
+
+.online-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.online-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--online-status-unknown);
+}
+
+.online-dot--online {
+    background: var(--online-status-online);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--online-status-online) 35%, transparent);
+}
+
+.online-dot--offline {
+    background: var(--online-status-offline);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--online-status-offline) 35%, transparent);
+}
+
+.online-label {
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.online-status[data-state="online"] .online-label,
+.online-status[data-state="offline"] .online-label {
+    color: var(--text);
 }
 
 .badge {
