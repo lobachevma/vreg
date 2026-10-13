@@ -48,6 +48,18 @@
             </dd>
         </div>
         <div>
+            <dt>В сети</dt>
+            <dd>
+                <span class="online-status"
+                      data-recorder-ip="{{ recorder.ip_address }}"
+                      data-state="loading"
+                      aria-label="Проверка связи">
+                    <span class="online-dot online-dot--unknown" aria-hidden="true"></span>
+                    <span class="online-label">Проверка…</span>
+                </span>
+            </dd>
+        </div>
+        <div>
             <dt>Логин</dt>
             <dd>{{ recorder.login }}</dd>
         </div>
@@ -141,6 +153,7 @@
         {% endif %}
     </div>
 </div>
+<script src="{{ url_for('static', filename='online_status.js') }}"></script>
 <script>
     window.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".password-field").forEach(function (field) {
