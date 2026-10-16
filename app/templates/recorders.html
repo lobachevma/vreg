@@ -50,6 +50,14 @@
         </form>
     </div>
     <div class="header-tools">
+        {% if recorders %}
+        <button type="button"
+                id="check-page-availability"
+                class="btn btn-secondary"
+                data-availability-bulk-url="{{ url_for('main.recorders_availability_check') }}">
+            Проверить доступность
+        </button>
+        {% endif %}
         {% if session.get('is_admin') %}
         <a href="{{ url_for('main.add_recorder') }}" class="btn btn-primary">Добавить</a>
         {% endif %}
@@ -77,6 +85,7 @@
                 <th>IP адрес</th>
                 <th>Логин</th>
                 <th>Глубина хранения</th>
+                <th>Доступен</th>
                 <th>Синхронизация времени</th>
                 <th>КОМЕНТАРИИ</th>
             </tr>
@@ -91,6 +100,11 @@
                 <td><code>{{ recorder.ip_address }}</code></td>
                 <td>{{ recorder.login }}</td>
                 <td class="{% if recorder.storage_depth < 30 %}storage-low{% else %}storage-ok{% endif %}">{{ recorder.storage_depth }}</td>
+                <td class="time-sync-cell availability-cell" data-recorder-id="{{ recorder.id }}">
+                    <span class="time-sync-status availability-status {% if recorder.available %}time-sync-yes{% else %}time-sync-no{% endif %}"
+                          aria-label="{% if recorder.available %}Доступен{% else %}Недоступен{% endif %}"
+                          title="{% if recorder.available %}Доступен{% else %}Недоступен{% endif %}">{% if recorder.available %}✓{% else %}✗{% endif %}</span>
+                </td>
                 <td class="time-sync-cell">
                     {% if recorder.time_sync %}
                     <span class="time-sync-status time-sync-yes" aria-label="Синхронизация времени включена" title="Включена">✓</span>
@@ -115,6 +129,80 @@
 
 <script>
     window.addEventListener("DOMContentLoaded", function () {
+        function setAvailabilityCell(cell, available) {
+            const statusEl = cell.querySelector(".availability-status");
+            if (!statusEl) return;
+            statusEl.textContent = available ? "✓" : "✗";
+            statusEl.classList.toggle("time-sync-yes", available);
+            statusEl.classList.toggle("time-sync-no", !available);
+            const label = available ? "Доступен" : "Недоступен";
+            statusEl.setAttribute("aria-label", label);
+            statusEl.setAttribute("title", label);
+        }
+
+        function setAvailabilityPending(cell) {
+            const statusEl = cell.querySelector(".availability-status");
+            if (!statusEl) return;
+            statusEl.textContent = "…";
+            statusEl.classList.remove("time-sync-yes", "time-sync-no");
+            statusEl.setAttribute("aria-label", "Проверка доступности");
+            statusEl.setAttribute("title", "Проверка");
+        }
+
+        const bulkButton = document.getElementById("check-page-availability");
+        if (bulkButton) {
+            bulkButton.addEventListener("click", function () {
+                const url = bulkButton.dataset.availabilityBulkUrl;
+                const cells = Array.from(document.querySelectorAll(".availability-cell"));
+                const recorderIds = cells
+                    .map(function (cell) {
+                        return parseInt(cell.dataset.recorderId, 10);
+                    })
+                    .filter(function (id) {
+                        return !Number.isNaN(id);
+                    });
+
+                if (!url || !recorderIds.length || bulkButton.disabled) {
+                    return;
+                }
+
+                bulkButton.disabled = true;
+                bulkButton.classList.add("is-loading");
+                cells.forEach(setAvailabilityPending);
+
+                fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ recorder_ids: recorderIds }),
+                })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error("availability bulk check failed");
+                        }
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        const results = data.results || {};
+                        cells.forEach(function (cell) {
+                            const id = String(cell.dataset.recorderId);
+                            setAvailabilityCell(cell, Boolean(results[id]));
+                        });
+                    })
+                    .catch(function () {
+                        cells.forEach(function (cell) {
+                            setAvailabilityCell(cell, false);
+                        });
+                    })
+                    .finally(function () {
+                        bulkButton.disabled = false;
+                        bulkButton.classList.remove("is-loading");
+                    });
+            });
+        }
+
         document.querySelectorAll(".recorder-row").forEach(function (row) {
             row.addEventListener("click", function (event) {
                 if (event.target.closest("a, button, form, input, select, textarea, label")) {

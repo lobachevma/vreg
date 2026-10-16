@@ -4,9 +4,13 @@ from app import db
 from app.auth import admin_required
 from app.models import Building, Hdd, Recorder, RecorderModel, User
 from app.system_settings import (
+    MAX_PING_COUNT,
     MAX_SESSION_TIMEOUT_MINUTES,
+    MIN_PING_COUNT,
     MIN_SESSION_TIMEOUT_MINUTES,
+    get_availability_ping_count,
     get_session_timeout_seconds,
+    set_availability_ping_count,
     set_session_timeout_seconds,
 )
 
@@ -321,6 +325,7 @@ def delete_model(model_id):
 def settings():
     if request.method == "POST":
         minutes_raw = request.form.get("timeout_minutes", "").strip()
+        ping_count_raw = request.form.get("ping_count", "").strip()
         try:
             timeout_minutes = int(minutes_raw)
             if not MIN_SESSION_TIMEOUT_MINUTES <= timeout_minutes <= MAX_SESSION_TIMEOUT_MINUTES:
@@ -333,8 +338,20 @@ def settings():
             )
             return redirect(url_for("admin.settings"))
 
+        try:
+            ping_count = int(ping_count_raw)
+            if not MIN_PING_COUNT <= ping_count <= MAX_PING_COUNT:
+                raise ValueError
+        except ValueError:
+            flash(
+                f"Количество ping должно быть от {MIN_PING_COUNT} до {MAX_PING_COUNT}.",
+                "danger",
+            )
+            return redirect(url_for("admin.settings"))
+
         timeout_seconds = timeout_minutes * 60
         set_session_timeout_seconds(timeout_seconds)
+        set_availability_ping_count(ping_count)
         current_app.config["SESSION_IDLE_TIMEOUT_SECONDS"] = timeout_seconds
         flash("Настройки сохранены.", "success")
         return redirect(url_for("admin.settings"))
@@ -346,4 +363,7 @@ def settings():
         timeout_minutes=timeout_seconds // 60,
         min_timeout_minutes=MIN_SESSION_TIMEOUT_MINUTES,
         max_timeout_minutes=MAX_SESSION_TIMEOUT_MINUTES,
+        ping_count=get_availability_ping_count(),
+        min_ping_count=MIN_PING_COUNT,
+        max_ping_count=MAX_PING_COUNT,
     )

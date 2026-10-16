@@ -14,10 +14,14 @@ def create_app():
         raise RuntimeError("SECRET_KEY is required")
     app.config["SECRET_KEY"] = secret_key
     app.config["SESSION_IDLE_TIMEOUT_SECONDS"] = 300
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+
+    database_url = os.environ.get(
         "DATABASE_URL",
         "postgresql://vreg:vreg@db:5432/vreg",
     )
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)

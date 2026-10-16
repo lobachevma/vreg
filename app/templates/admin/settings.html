@@ -26,6 +26,21 @@
         Допустимый диапазон: {{ min_timeout_minutes }}–{{ max_timeout_minutes }} мин.
         Текущее значение: {{ timeout_seconds }} сек.
     </p>
+
+    <h2>Проверка доступности регистраторов</h2>
+    <label for="ping_count">Количество ping</label>
+    <input type="number"
+           id="ping_count"
+           name="ping_count"
+           min="{{ min_ping_count }}"
+           max="{{ max_ping_count }}"
+           value="{{ ping_count }}"
+           required>
+    <p class="hint">
+        Сколько раз выполняется команда ping при проверке доступности регистратора.
+        Допустимый диапазон: {{ min_ping_count }}–{{ max_ping_count }}.
+    </p>
+
     <button type="submit" class="btn btn-primary">Сохранить</button>
 </form>
 {% endblock %}

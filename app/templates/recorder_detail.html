@@ -95,6 +95,18 @@
         </div>
         {% endif %}
         {% endfor %}
+        <div class="detail-action availability-check"
+             role="button"
+             tabindex="0"
+             data-availability-url="{{ url_for('main.recorder_availability_check', recorder_id=recorder.id) }}"
+             aria-label="{% if recorder.available %}Регистратор доступен. Нажмите для повторной проверки{% else %}Регистратор недоступен. Нажмите для повторной проверки{% endif %}"
+             title="Нажмите для проверки доступности (ping)">
+            <dt>Доступен</dt>
+            <dd class="time-sync-value">
+                <span class="time-sync-status availability-status {% if recorder.available %}time-sync-yes{% else %}time-sync-no{% endif %}"
+                      aria-hidden="true">{% if recorder.available %}✓{% else %}✗{% endif %}</span>
+            </dd>
+        </div>
         <div>
             <dt>Синхронизация времени</dt>
             <dd class="time-sync-value">
@@ -143,6 +155,57 @@
 </div>
 <script>
     window.addEventListener("DOMContentLoaded", function () {
+        function setAvailabilityStatus(block, available) {
+            const statusEl = block.querySelector(".availability-status");
+            if (!statusEl) return;
+            statusEl.textContent = available ? "✓" : "✗";
+            statusEl.classList.toggle("time-sync-yes", available);
+            statusEl.classList.toggle("time-sync-no", !available);
+            block.setAttribute(
+                "aria-label",
+                available ? "Регистратор доступен. Нажмите для повторной проверки" : "Регистратор недоступен. Нажмите для повторной проверки"
+            );
+        }
+
+        function runAvailabilityCheck(block) {
+            const url = block.dataset.availabilityUrl;
+            if (!url || block.classList.contains("is-loading")) return;
+
+            block.classList.add("is-loading");
+            fetch(url, {
+                method: "POST",
+                headers: { "Accept": "application/json" },
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("availability check failed");
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    setAvailabilityStatus(block, Boolean(data.available));
+                })
+                .catch(function () {
+                    setAvailabilityStatus(block, false);
+                })
+                .finally(function () {
+                    block.classList.remove("is-loading");
+                });
+        }
+
+        document.querySelectorAll(".availability-check").forEach(function (block) {
+            block.addEventListener("click", function () {
+                runAvailabilityCheck(block);
+            });
+            block.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    runAvailabilityCheck(block);
+                }
+            });
+            runAvailabilityCheck(block);
+        });
+
         document.querySelectorAll(".password-field").forEach(function (field) {
             const valueEl = field.querySelector(".password-value");
             const toggle = field.querySelector(".password-toggle");

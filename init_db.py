@@ -52,6 +52,11 @@ with app.app_context():
     )
     db.session.execute(
         text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS available BOOLEAN NOT NULL DEFAULT TRUE"
+        )
+    )
+    db.session.execute(
+        text(
             "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS hdd1_id INTEGER REFERENCES hdds(id)"
         )
     )
@@ -143,6 +148,9 @@ with app.app_context():
 
     if not SystemSetting.query.filter_by(key="session_idle_timeout_seconds").first():
         db.session.add(SystemSetting(key="session_idle_timeout_seconds", value="300"))
+
+    if not SystemSetting.query.filter_by(key="recorder_availability_ping_count").first():
+        db.session.add(SystemSetting(key="recorder_availability_ping_count", value="3"))
 
     db.session.commit()
 

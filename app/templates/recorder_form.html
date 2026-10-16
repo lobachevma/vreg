@@ -97,6 +97,11 @@
     {% endfor %}
 
     <label class="checkbox-label">
+        <input type="checkbox" id="available" name="available" {% if form.get('available', True) %}checked{% endif %}>
+        Доступен
+    </label>
+
+    <label class="checkbox-label">
         <input type="checkbox" id="time_sync" name="time_sync" {% if form.get('time_sync') %}checked{% endif %}>
         Синхронизация времени
     </label>

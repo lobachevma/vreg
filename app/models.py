@@ -74,6 +74,7 @@ class Recorder(db.Model):
     storage_depth = db.Column(db.Integer, nullable=False, default=0)
     recorder_type = db.Column(db.String(16), nullable=False, default="")
     time_sync = db.Column(db.Boolean, nullable=False, default=False)
+    available = db.Column(db.Boolean, nullable=False, default=True)
     hdd1_id = db.Column(db.Integer, db.ForeignKey("hdds.id"), nullable=True)
     hdd2_id = db.Column(db.Integer, db.ForeignKey("hdds.id"), nullable=True)
     hdd3_id = db.Column(db.Integer, db.ForeignKey("hdds.id"), nullable=True)

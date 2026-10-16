@@ -9,16 +9,44 @@ from flask import (
     url_for,
 )
 from datetime import datetime, timezone
+import ipaddress
+import subprocess
 from zoneinfo import ZoneInfo
 from sqlalchemy import func
 
 from app import db
 from app.auth import admin_required, login_required
 from app.models import Building, Hdd, Recorder, RecorderComment, RecorderModel, User
+from app.system_settings import get_availability_ping_count
 
 bp = Blueprint("main", __name__)
 
 CAMERA_CAPACITY_OPTIONS = (4, 8, 16, 24, 32)
+
+
+def _check_recorder_availability(ip_address):
+    if not ip_address:
+        return False
+
+    try:
+        normalized_ip = str(ipaddress.ip_address(ip_address.strip()))
+    except ValueError:
+        return False
+
+    ping_count = get_availability_ping_count()
+
+    try:
+        result = subprocess.run(
+            ["ping", "-c", str(ping_count), "-W", "1", normalized_ip],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=max(5, ping_count * 2),
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+    return result.returncode == 0
 
 
 def _get_buildings():
@@ -168,6 +196,41 @@ def recorders():
     )
 
 
+@bp.route("/recorders/availability-check", methods=["POST"])
+@login_required
+def recorders_availability_check():
+    data = request.get_json(silent=True) or {}
+    ids_raw = data.get("recorder_ids")
+    if not isinstance(ids_raw, list) or not ids_raw:
+        response = jsonify(error="recorder_ids required")
+        response.status_code = 400
+        return response
+
+    recorder_ids = []
+    for raw in ids_raw:
+        try:
+            recorder_ids.append(int(raw))
+        except (TypeError, ValueError):
+            continue
+
+    if not recorder_ids:
+        response = jsonify(error="recorder_ids required")
+        response.status_code = 400
+        return response
+
+    recorders = Recorder.query.filter(Recorder.id.in_(recorder_ids)).all()
+    results = {}
+    for recorder in recorders:
+        is_available = _check_recorder_availability(recorder.ip_address)
+        recorder.available = is_available
+        results[str(recorder.id)] = is_available
+
+    db.session.commit()
+    response = jsonify(results=results)
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 @bp.route("/recorders/<int:recorder_id>", methods=["GET", "POST"])
 @login_required
 def recorder_detail(recorder_id):
@@ -243,6 +306,18 @@ def recorder_time_sync(recorder_id):
     return response
 
 
+@bp.route("/recorders/<int:recorder_id>/availability", methods=["POST"])
+@login_required
+def recorder_availability_check(recorder_id):
+    recorder = Recorder.query.get_or_404(recorder_id)
+    is_available = _check_recorder_availability(recorder.ip_address)
+    recorder.available = is_available
+    db.session.commit()
+    response = jsonify(available=is_available)
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def _parse_recorder_form():
     building_id_raw = request.form.get("building_id", "").strip()
     model = request.form.get("model", "").strip()
@@ -254,6 +329,7 @@ def _parse_recorder_form():
     storage_depth_raw = request.form.get("storage_depth", "").strip()
     recorder_type = request.form.get("recorder_type", "").strip().upper()
     time_sync = request.form.get("time_sync") == "on"
+    available = request.form.get("available") == "on"
     hdd1_id_raw = request.form.get("hdd1_id", "").strip()
     hdd2_id_raw = request.form.get("hdd2_id", "").strip()
     hdd3_id_raw = request.form.get("hdd3_id", "").strip()
@@ -270,6 +346,7 @@ def _parse_recorder_form():
         "storage_depth": storage_depth_raw,
         "recorder_type": recorder_type,
         "time_sync": time_sync,
+        "available": available,
         "hdd1_id": hdd1_id_raw,
         "hdd2_id": hdd2_id_raw,
         "hdd3_id": hdd3_id_raw,
@@ -360,6 +437,7 @@ def _parse_recorder_form():
         hdd_ids[2],
         hdd_ids[3],
         hdd_ids[4],
+        available,
     )
 
 
@@ -371,7 +449,7 @@ def add_recorder():
     recorder_models = _get_recorder_models()
 
     if request.method == "POST":
-        form, errors, building, camera_capacity, camera_count, storage_depth, hdd1_id, hdd2_id, hdd3_id, hdd4_id = _parse_recorder_form()
+        form, errors, building, camera_capacity, camera_count, storage_depth, hdd1_id, hdd2_id, hdd3_id, hdd4_id, available = _parse_recorder_form()
 
         if errors:
             for error in errors:
@@ -399,6 +477,7 @@ def add_recorder():
             storage_depth=storage_depth,
             recorder_type=form["recorder_type"],
             time_sync=form["time_sync"],
+            available=available,
             hdd1_id=hdd1_id,
             hdd2_id=hdd2_id,
             hdd3_id=hdd3_id,
@@ -433,7 +512,7 @@ def edit_recorder(recorder_id):
     recorder_models = _get_recorder_models()
 
     if request.method == "POST":
-        form, errors, building, camera_capacity, camera_count, storage_depth, hdd1_id, hdd2_id, hdd3_id, hdd4_id = _parse_recorder_form()
+        form, errors, building, camera_capacity, camera_count, storage_depth, hdd1_id, hdd2_id, hdd3_id, hdd4_id, available = _parse_recorder_form()
 
         if errors:
             for error in errors:
@@ -463,6 +542,7 @@ def edit_recorder(recorder_id):
         recorder.storage_depth = storage_depth
         recorder.recorder_type = form["recorder_type"]
         recorder.time_sync = form["time_sync"]
+        recorder.available = available
         recorder.hdd1_id = hdd1_id
         recorder.hdd2_id = hdd2_id
         recorder.hdd3_id = hdd3_id
@@ -484,6 +564,7 @@ def edit_recorder(recorder_id):
             "storage_depth": recorder.storage_depth,
             "recorder_type": recorder.recorder_type,
             "time_sync": recorder.time_sync,
+            "available": recorder.available,
             "hdd1_id": recorder.hdd1_id or "",
             "hdd2_id": recorder.hdd2_id or "",
             "hdd3_id": recorder.hdd3_id or "",
