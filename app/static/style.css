@@ -440,6 +440,23 @@ th {
     word-break: break-word;
 }
 
+.detail-list div.detail-action {
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.detail-list div.detail-action:hover,
+.detail-list div.detail-action:focus-visible {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.08);
+    outline: none;
+}
+
+.detail-list div.detail-action.is-loading {
+    opacity: 0.65;
+    pointer-events: none;
+}
+
 .password-field {
     display: flex;
     align-items: center;
