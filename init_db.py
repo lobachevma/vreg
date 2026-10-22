@@ -100,6 +100,11 @@ with app.app_context():
             "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS hdd4_id INTEGER REFERENCES hdds(id)"
         )
     )
+    db.session.execute(
+        text(
+            "ALTER TABLE recorders ADD COLUMN IF NOT EXISTS last_inspection_date DATE"
+        )
+    )
     db.session.commit()
 
     admin = User.query.filter_by(username="admin").first()

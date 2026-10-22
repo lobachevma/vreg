@@ -9,11 +9,12 @@
         <p class="subtitle">{{ recorder.display_address }}</p>
     </div>
     <div class="detail-actions">
-        <a href="{{ url_for('main.recorders') }}" class="btn btn-secondary">Назад</a>
+        <a href="{{ url_for('main.recorders', **recorder_list_query) }}" class="btn btn-secondary">Назад</a>
         {% if session.get('is_admin') %}
         <div class="detail-admin-actions">
-            <a href="{{ url_for('main.edit_recorder', recorder_id=recorder.id) }}" class="btn btn-primary">Изменить</a>
-            <form method="post" action="{{ url_for('main.delete_recorder', recorder_id=recorder.id) }}" onsubmit="return confirm('Удалить регистратор?');">
+            <a href="{{ url_for('main.edit_recorder', recorder_id=recorder.id, **recorder_list_query) }}" class="btn btn-primary">Изменить</a>
+            <form method="post" action="{{ url_for('main.delete_recorder', recorder_id=recorder.id, **recorder_list_query) }}" onsubmit="return confirm('Удалить регистратор?');">
+                {% include 'recorder_list_query_fields.html' %}
                 <button type="submit" class="btn btn-danger">Удалить</button>
             </form>
         </div>
@@ -117,9 +118,32 @@
                 {% endif %}
             </dd>
         </div>
+        <div>
+            <dt>Дата последней инспекции</dt>
+            <dd>
+                {% if recorder.last_inspection_date %}
+                {{ recorder.last_inspection_date.strftime('%d.%m.%Y') }}
+                {% else %}
+                Не указана
+                {% endif %}
+            </dd>
+        </div>
     </dl>
 
+    <form method="post" class="comment-form inspection-date-form">
+        {% include 'recorder_list_query_fields.html' %}
+        <div class="inspection-date-row">
+            <input type="date"
+                   id="last_inspection_date"
+                   name="last_inspection_date"
+                   value="{{ last_inspection_date_input }}"
+                   aria-label="Дата последней инспекции">
+            <button type="submit" name="action" value="save_inspection_date" class="btn btn-secondary">Сохранить дату</button>
+        </div>
+    </form>
+
     <form method="post" class="comment-form">
+        {% include 'recorder_list_query_fields.html' %}
         <label for="comment">Комментарий</label>
         <textarea id="comment" name="comment" rows="5" placeholder="Введите комментарий для этого регистратора"></textarea>
         <div class="comment-actions">
@@ -138,6 +162,7 @@
                     <span class="comment-time">{{ item.created_at }}</span>
                     {% if session.get('is_admin') %}
                     <form method="post" class="comment-delete-inline" onsubmit="return confirm('Удалить комментарий?');">
+                        {% include 'recorder_list_query_fields.html' %}
                         <input type="hidden" name="action" value="delete_comment">
                         <input type="hidden" name="comment_id" value="{{ item.id }}">
                         <button type="submit" class="btn btn-danger btn-sm">Удалить</button>

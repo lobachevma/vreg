@@ -2,6 +2,8 @@
 
 {% block title %}Регистраторы — VReg{% endblock %}
 
+{% block container_modifier %} container-wide{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <div>
@@ -40,6 +42,16 @@
                 <option value="SCHOOL" {% if selected_building_type == 'SCHOOL' %}selected{% endif %}>ШКОЛА</option>
             </select>
 
+            <label class="checkbox-label filter-checkbox">
+                <input type="checkbox"
+                       id="problematic"
+                       name="problematic"
+                       value="on"
+                       {% if show_problematic %}checked{% endif %}
+                       onchange="this.form.submit()">
+                Показать проблемные
+            </label>
+
             <noscript><button type="submit" class="btn btn-secondary btn-sm">Применить</button></noscript>
             {% if sort %}
             <input type="hidden" name="sort" value="{{ sort }}">
@@ -65,14 +77,14 @@
 </div>
 
 {% if recorders %}
-<div class="table-wrap">
+<div class="table-wrap recorders-table-wrap">
     <table class="recorders-table">
         <thead>
             <tr>
                 <th>№</th>
                 <th class="sortable">
                     {% set address_order = 'desc' if sort == 'address' and order == 'asc' else 'asc' %}
-                    <a href="{{ url_for('main.recorders', sort='address', order=address_order, address=selected_address, device=selected_device, building_type=selected_building_type) }}"
+                    <a href="{{ url_for('main.recorders', sort='address', order=address_order, address=selected_address, device=selected_device, building_type=selected_building_type, problematic='on' if show_problematic else None) }}"
                        class="sort-link{% if sort == 'address' %} active{% endif %}">
                         Адрес
                         {% if sort == 'address' %}
@@ -84,15 +96,16 @@
                 <th>Камеры</th>
                 <th>IP адрес</th>
                 <th>Логин</th>
-                <th>Глубина хранения</th>
+                <th title="Глубина хранения">Глубина</th>
                 <th>Доступен</th>
-                <th>Синхронизация времени</th>
-                <th>КОМЕНТАРИИ</th>
+                <th title="Синхронизация времени">Синхр. времени</th>
+                <th title="Дата последней инспекции">Дата проверки</th>
+                <th>Коммент.</th>
             </tr>
         </thead>
         <tbody>
             {% for recorder in recorders %}
-            <tr class="recorder-row" data-href="{{ url_for('main.recorder_detail', recorder_id=recorder.id) }}" tabindex="0" role="link" aria-label="Открыть карточку регистратора {{ loop.index }}">
+            <tr class="recorder-row" data-href="{{ url_for('main.recorder_detail', recorder_id=recorder.id, **recorder_list_query) }}" tabindex="0" role="link" aria-label="Открыть карточку регистратора {{ loop.index }}">
                 <td>{{ loop.index }}</td>
                 <td>{{ recorder.display_address }}</td>
                 <td>{{ recorder.model }}</td>
@@ -112,6 +125,9 @@
                     <span class="time-sync-status time-sync-no" aria-label="Синхронизация времени выключена" title="Выключена">✗</span>
                     {% endif %}
                 </td>
+                <td class="inspection-date-cell inspection-date-{{ recorder.inspection_date_status }}">
+                    {{ recorder.display_inspection_date }}
+                </td>
                 <td>{{ comment_counts.get(recorder.id, 0) }}</td>
             </tr>
             {% endfor %}
@@ -120,7 +136,7 @@
 </div>
 {% else %}
 <div class="empty-state">
-    <p>Записей пока нет.</p>
+    <p>{% if show_problematic %}Проблемных регистраторов не найдено.{% else %}Записей пока нет.{% endif %}</p>
     {% if session.get('is_admin') %}
     <a href="{{ url_for('main.add_recorder') }}" class="btn btn-primary">Добавить первый регистратор</a>
     {% endif %}

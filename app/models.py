@@ -1,6 +1,11 @@
+from datetime import datetime
+
 from werkzeug.security import check_password_hash, generate_password_hash
+from zoneinfo import ZoneInfo
 
 from app import db
+
+INSPECTION_FRESH_DAYS = 30
 
 
 class User(db.Model):
@@ -80,6 +85,7 @@ class Recorder(db.Model):
     hdd3_id = db.Column(db.Integer, db.ForeignKey("hdds.id"), nullable=True)
     hdd4_id = db.Column(db.Integer, db.ForeignKey("hdds.id"), nullable=True)
     comment = db.Column(db.Text, nullable=False, default="")
+    last_inspection_date = db.Column(db.Date, nullable=True)
 
     building = db.relationship("Building", back_populates="recorders")
     hdd1 = db.relationship("Hdd", foreign_keys=[hdd1_id])
@@ -124,6 +130,21 @@ class Recorder(db.Model):
         if filled <= 2:
             return 2
         return 4
+
+    @property
+    def display_inspection_date(self) -> str:
+        if self.last_inspection_date:
+            return self.last_inspection_date.strftime("%d.%m.%Y")
+        return "—"
+
+    @property
+    def inspection_date_status(self) -> str:
+        if not self.last_inspection_date:
+            return "stale"
+        today = datetime.now(ZoneInfo("Europe/Moscow")).date()
+        if (today - self.last_inspection_date).days > INSPECTION_FRESH_DAYS:
+            return "stale"
+        return "ok"
 
 
 class RecorderComment(db.Model):

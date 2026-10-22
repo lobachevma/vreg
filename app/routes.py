@@ -8,7 +8,7 @@ from flask import (
     session,
     url_for,
 )
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import ipaddress
 import subprocess
 from zoneinfo import ZoneInfo
@@ -16,12 +16,91 @@ from sqlalchemy import func
 
 from app import db
 from app.auth import admin_required, login_required
-from app.models import Building, Hdd, Recorder, RecorderComment, RecorderModel, User
+from app.models import (
+    INSPECTION_FRESH_DAYS,
+    Building,
+    Hdd,
+    Recorder,
+    RecorderComment,
+    RecorderModel,
+    User,
+)
 from app.system_settings import get_availability_ping_count
 
 bp = Blueprint("main", __name__)
 
 CAMERA_CAPACITY_OPTIONS = (4, 8, 16, 24, 32)
+
+RECORDER_LIST_QUERY_KEYS = (
+    "address",
+    "device",
+    "building_type",
+    "problematic",
+    "sort",
+    "order",
+)
+
+
+def _recorder_list_query_args(source=None):
+    src = request.args if source is None else source
+    params = {}
+    address = src.get("address", "").strip()
+    if address:
+        params["address"] = address
+    device = src.get("device", "").strip()
+    if device:
+        params["device"] = device
+    building_type = src.get("building_type", "").strip().upper()
+    if building_type in {"DOU", "SCHOOL"}:
+        params["building_type"] = building_type
+    if src.get("problematic") == "on":
+        params["problematic"] = "on"
+    sort = src.get("sort", "").strip()
+    if sort in {"id", "address"}:
+        params["sort"] = sort
+    order = src.get("order", "").strip()
+    if order in {"asc", "desc"}:
+        params["order"] = order
+    return params
+
+
+def _recorder_list_query_args_from_request():
+    params = _recorder_list_query_args(request.args)
+    if request.method == "POST":
+        params.update(_recorder_list_query_args(request.form))
+    return params
+
+
+def _redirect_to_recorders(**overrides):
+    params = _recorder_list_query_args_from_request()
+    params.update(overrides)
+    return redirect(url_for("main.recorders", **params))
+
+
+def _redirect_to_recorder_detail(recorder_id):
+    return redirect(
+        url_for(
+            "main.recorder_detail",
+            recorder_id=recorder_id,
+            **_recorder_list_query_args_from_request(),
+        )
+    )
+
+
+@bp.app_context_processor
+def _inject_recorder_list_query():
+    return {"recorder_list_query": _recorder_list_query_args_from_request()}
+
+
+def _problematic_recorders_condition():
+    today = datetime.now(ZoneInfo("Europe/Moscow")).date()
+    stale_before = today - timedelta(days=INSPECTION_FRESH_DAYS)
+    return db.or_(
+        Recorder.storage_depth < 30,
+        Recorder.available.is_(False),
+        Recorder.last_inspection_date.is_(None),
+        Recorder.last_inspection_date < stale_before,
+    )
 
 
 def _check_recorder_availability(ip_address):
@@ -126,6 +205,7 @@ def recorders():
     selected_address = request.args.get("address", "").strip()
     selected_device = request.args.get("device", "").strip()
     selected_building_type = request.args.get("building_type", "").strip().upper()
+    show_problematic = request.args.get("problematic") == "on"
 
     query = Recorder.query.outerjoin(Building)
 
@@ -140,6 +220,9 @@ def recorders():
 
     if selected_building_type in {"DOU", "SCHOOL"}:
         query = query.filter(Building.building_type == selected_building_type)
+
+    if show_problematic:
+        query = query.filter(_problematic_recorders_condition())
 
     if sort == "address":
         column = Building.address
@@ -193,6 +276,7 @@ def recorders():
         selected_address=selected_address,
         selected_device=selected_device,
         selected_building_type=selected_building_type,
+        show_problematic=show_problematic,
     )
 
 
@@ -242,24 +326,38 @@ def recorder_detail(recorder_id):
         if action == "delete_comment":
             if not session.get("is_admin"):
                 flash("Удалять комментарии может только администратор.", "danger")
-                return redirect(url_for("main.recorder_detail", recorder_id=recorder.id))
+                return _redirect_to_recorder_detail(recorder.id)
 
             comment_id_raw = request.form.get("comment_id", "").strip()
             try:
                 comment_id = int(comment_id_raw)
             except ValueError:
                 flash("Некорректный комментарий.", "danger")
-                return redirect(url_for("main.recorder_detail", recorder_id=recorder.id))
+                return _redirect_to_recorder_detail(recorder.id)
 
             comment = RecorderComment.query.filter_by(id=comment_id, recorder_id=recorder.id).first_or_404()
             db.session.delete(comment)
             db.session.commit()
             flash("Комментарий удалён.", "success")
-            return redirect(url_for("main.recorder_detail", recorder_id=recorder.id))
+            return _redirect_to_recorder_detail(recorder.id)
+
+        if action == "save_inspection_date":
+            raw_date = request.form.get("last_inspection_date", "").strip()
+            if raw_date:
+                try:
+                    recorder.last_inspection_date = date.fromisoformat(raw_date)
+                except ValueError:
+                    flash("Некорректная дата инспекции.", "danger")
+                    return _redirect_to_recorder_detail(recorder.id)
+            else:
+                recorder.last_inspection_date = None
+            db.session.commit()
+            flash("Дата последней инспекции сохранена.", "success")
+            return _redirect_to_recorder_detail(recorder.id)
 
         if not comment_text:
             flash("Комментарий не может быть пустым.", "danger")
-            return redirect(url_for("main.recorder_detail", recorder_id=recorder.id))
+            return _redirect_to_recorder_detail(recorder.id)
 
         comment = RecorderComment(
             recorder_id=recorder.id,
@@ -270,7 +368,7 @@ def recorder_detail(recorder_id):
         db.session.add(comment)
         db.session.commit()
         flash("Комментарий сохранён.", "success")
-        return redirect(url_for("main.recorder_detail", recorder_id=recorder.id))
+        return _redirect_to_recorder_detail(recorder.id)
 
     moscow = ZoneInfo("Europe/Moscow")
     comments = [
@@ -282,7 +380,15 @@ def recorder_detail(recorder_id):
         }
         for comment in recorder.comments
     ]
-    return render_template("recorder_detail.html", recorder=recorder, comments=comments)
+    last_inspection_date_input = (
+        recorder.last_inspection_date.isoformat() if recorder.last_inspection_date else ""
+    )
+    return render_template(
+        "recorder_detail.html",
+        recorder=recorder,
+        comments=comments,
+        last_inspection_date_input=last_inspection_date_input,
+    )
 
 
 @bp.route("/recorders/<int:recorder_id>/password")
@@ -528,7 +634,11 @@ def edit_recorder(recorder_id):
                     recorder=recorder,
                 ),
                 title="Редактировать регистратор",
-                action=url_for("main.edit_recorder", recorder_id=recorder.id),
+                action=url_for(
+                    "main.edit_recorder",
+                    recorder_id=recorder.id,
+                    **_recorder_list_query_args_from_request(),
+                ),
             )
 
         recorder.building_id = building.id
@@ -549,8 +659,9 @@ def edit_recorder(recorder_id):
         recorder.hdd4_id = hdd4_id
         db.session.commit()
         flash("Данные регистратора обновлены.", "success")
-        return redirect(url_for("main.recorders"))
+        return _redirect_to_recorders()
 
+    list_query = _recorder_list_query_args_from_request()
     return render_template(
         "recorder_form.html",
         form={
@@ -582,7 +693,7 @@ def edit_recorder(recorder_id):
             "",
         ),
         title="Редактировать регистратор",
-        action=url_for("main.edit_recorder", recorder_id=recorder.id),
+        action=url_for("main.edit_recorder", recorder_id=recorder.id, **list_query),
     )
 
 
@@ -593,4 +704,4 @@ def delete_recorder(recorder_id):
     db.session.delete(recorder)
     db.session.commit()
     flash("Регистратор удалён.", "success")
-    return redirect(url_for("main.recorders"))
+    return _redirect_to_recorders()
