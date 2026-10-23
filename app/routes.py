@@ -197,6 +197,29 @@ def logout():
     return redirect(url_for("main.login"))
 
 
+def _recorder_row_group_key(recorder):
+    if recorder.building_id is not None:
+        return ("building", recorder.building_id)
+    return ("address", recorder.address or "")
+
+
+def _recorder_row_shades(recorders):
+    """Map each recorder row to shade 0/1; one building/address = one shade."""
+    labels = {}
+    for recorder in recorders:
+        key = _recorder_row_group_key(recorder)
+        if key not in labels:
+            labels[key] = (recorder.display_address or "").casefold()
+
+    shade_by_key = {
+        key: index % 2 for index, key in enumerate(sorted(labels.keys(), key=labels.get))
+    }
+    return {
+        recorder.id: shade_by_key[_recorder_row_group_key(recorder)]
+        for recorder in recorders
+    }
+
+
 @bp.route("/recorders")
 @login_required
 def recorders():
@@ -248,6 +271,7 @@ def recorders():
     return render_template(
         "recorders.html",
         recorders=items,
+        recorder_row_shades=_recorder_row_shades(items),
         comment_counts=comment_counts,
         addresses=[
             row[0]

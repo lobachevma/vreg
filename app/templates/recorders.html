@@ -94,7 +94,7 @@
                 </th>
                 <th>Модель</th>
                 <th>Камеры</th>
-                <th>IP адрес</th>
+                <th>IP</th>
                 <th>Логин</th>
                 <th title="Глубина хранения">Глубина</th>
                 <th>Доступен</th>
@@ -105,7 +105,8 @@
         </thead>
         <tbody>
             {% for recorder in recorders %}
-            <tr class="recorder-row" data-href="{{ url_for('main.recorder_detail', recorder_id=recorder.id, **recorder_list_query) }}" tabindex="0" role="link" aria-label="Открыть карточку регистратора {{ loop.index }}">
+            {% set row_shade = recorder_row_shades.get(recorder.id, 0) %}
+            <tr class="recorder-row recorder-row--shade-{{ row_shade }}" data-href="{{ url_for('main.recorder_detail', recorder_id=recorder.id, **recorder_list_query) }}" tabindex="0" role="link" aria-label="Открыть карточку регистратора {{ loop.index }}">
                 <td>{{ loop.index }}</td>
                 <td>{{ recorder.display_address }}</td>
                 <td>{{ recorder.model }}</td>

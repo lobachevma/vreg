@@ -16,6 +16,9 @@
     --warning-text: #fcd34d;
     --info-bg: #1e3a5f;
     --info-text: #93c5fd;
+    --recorder-row-a: #1a2332;
+    --recorder-row-b: #222f42;
+    --recorder-row-hover: rgba(59, 130, 246, 0.14);
 }
 
 * {
@@ -346,12 +349,16 @@ h1 {
 }
 
 .recorders-table-wrap {
-    overflow-x: visible;
+    overflow-x: hidden;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+}
+
+.recorders-table {
+    table-layout: fixed;
 }
 
 th, td {
@@ -364,42 +371,100 @@ th, td {
 .recorders-table th,
 .recorders-table td {
     white-space: normal;
-    line-height: 1.45;
+    line-height: 1.35;
     height: auto;
-    padding: 0.65rem 0.75rem;
+    padding: 0.5rem 0.4rem;
+    overflow-wrap: anywhere;
 }
 
 .recorders-table th {
-    font-size: 0.72rem;
-    white-space: nowrap;
+    font-size: 0.68rem;
+    white-space: normal;
+    line-height: 1.2;
+    vertical-align: bottom;
 }
 
 .recorders-table td {
-    font-size: 0.92rem;
+    font-size: 0.88rem;
 }
 
+.recorders-table th:nth-child(1),
+.recorders-table td:nth-child(1),
+.recorders-table th:nth-child(4),
+.recorders-table td:nth-child(4),
+.recorders-table th:nth-child(7),
+.recorders-table td:nth-child(7),
+.recorders-table th:nth-child(8),
+.recorders-table td:nth-child(8),
+.recorders-table th:nth-child(9),
+.recorders-table td:nth-child(9),
+.recorders-table th:nth-child(10),
+.recorders-table td:nth-child(10),
+.recorders-table th:nth-child(11),
+.recorders-table td:nth-child(11) {
+    text-align: center;
+}
+
+.recorders-table th:nth-child(1),
+.recorders-table td:nth-child(1) {
+    width: 2.25rem;
+    white-space: nowrap;
+}
+
+.recorders-table th:nth-child(2),
 .recorders-table td:nth-child(2) {
-    min-width: 12rem;
-    max-width: 22rem;
+    width: 24%;
 }
 
+.recorders-table th:nth-child(3),
 .recorders-table td:nth-child(3) {
-    min-width: 8rem;
-    max-width: 12rem;
+    width: 11%;
+}
+
+.recorders-table th:nth-child(4),
+.recorders-table td:nth-child(4) {
+    width: 3.25rem;
+    white-space: nowrap;
+}
+
+.recorders-table th:nth-child(5),
+.recorders-table td:nth-child(5) {
+    width: 9%;
+}
+
+.recorders-table th:nth-child(6),
+.recorders-table td:nth-child(6) {
+    width: 8%;
+}
+
+.recorders-table th:nth-child(7),
+.recorders-table td:nth-child(7) {
+    width: 3.5rem;
+    white-space: nowrap;
+}
+
+.recorders-table th:nth-child(8),
+.recorders-table td:nth-child(8),
+.recorders-table th:nth-child(9),
+.recorders-table td:nth-child(9) {
+    width: 3.25rem;
 }
 
 .recorders-table th:nth-child(10),
 .recorders-table td:nth-child(10) {
+    width: 5.5rem;
     white-space: nowrap;
-    text-align: center;
-    min-width: 6.25rem;
 }
 
 .recorders-table th:nth-child(11),
 .recorders-table td:nth-child(11) {
-    text-align: center;
+    width: 3.25rem;
     white-space: nowrap;
-    width: 4.5rem;
+}
+
+.recorders-table td:nth-child(5) code {
+    font-size: 0.82rem;
+    word-break: break-all;
 }
 
 .inspection-date-cell {
@@ -420,15 +485,24 @@ th, td {
 }
 
 .recorders-table td {
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .recorders-table tbody tr.recorder-row {
     cursor: pointer;
 }
 
-.recorders-table tbody tr.recorder-row:hover {
-    background: rgba(59, 130, 246, 0.08);
+.recorders-table tbody tr.recorder-row--shade-0 {
+    background: var(--recorder-row-a);
+}
+
+.recorders-table tbody tr.recorder-row--shade-1 {
+    background: var(--recorder-row-b);
+}
+
+.recorders-table tbody tr.recorder-row--shade-0:hover,
+.recorders-table tbody tr.recorder-row--shade-1:hover {
+    background: var(--recorder-row-hover);
 }
 
 .recorders-table tbody tr.recorder-row:focus {
