@@ -8,9 +8,13 @@ from app.system_settings import (
     MAX_SESSION_TIMEOUT_MINUTES,
     MIN_PING_COUNT,
     MIN_SESSION_TIMEOUT_MINUTES,
+    PROBLEMATIC_FILTER_KEYS,
+    PROBLEMATIC_FILTER_LABELS,
     get_availability_ping_count,
+    get_problematic_filter_criteria,
     get_session_timeout_seconds,
     set_availability_ping_count,
+    set_problematic_filter_criteria,
     set_session_timeout_seconds,
 )
 
@@ -352,6 +356,12 @@ def settings():
         timeout_seconds = timeout_minutes * 60
         set_session_timeout_seconds(timeout_seconds)
         set_availability_ping_count(ping_count)
+        set_problematic_filter_criteria(
+            {
+                key: request.form.get(f"problematic_{key}") == "on"
+                for key in PROBLEMATIC_FILTER_KEYS
+            }
+        )
         current_app.config["SESSION_IDLE_TIMEOUT_SECONDS"] = timeout_seconds
         flash("Настройки сохранены.", "success")
         return redirect(url_for("admin.settings"))
@@ -366,4 +376,6 @@ def settings():
         ping_count=get_availability_ping_count(),
         min_ping_count=MIN_PING_COUNT,
         max_ping_count=MAX_PING_COUNT,
+        problematic_criteria=get_problematic_filter_criteria(),
+        problematic_criteria_labels=PROBLEMATIC_FILTER_LABELS,
     )

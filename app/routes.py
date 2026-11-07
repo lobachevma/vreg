@@ -25,7 +25,7 @@ from app.models import (
     RecorderModel,
     User,
 )
-from app.system_settings import get_availability_ping_count
+from app.system_settings import get_availability_ping_count, get_problematic_filter_criteria
 
 bp = Blueprint("main", __name__)
 
@@ -93,14 +93,28 @@ def _inject_recorder_list_query():
 
 
 def _problematic_recorders_condition():
-    today = datetime.now(ZoneInfo("Europe/Moscow")).date()
-    stale_before = today - timedelta(days=INSPECTION_FRESH_DAYS)
-    return db.or_(
-        Recorder.storage_depth < 30,
-        Recorder.available.is_(False),
-        Recorder.last_inspection_date.is_(None),
-        Recorder.last_inspection_date < stale_before,
-    )
+    criteria = get_problematic_filter_criteria()
+    parts = []
+
+    if criteria.get("depth"):
+        parts.append(Recorder.storage_depth < 30)
+
+    if criteria.get("availability"):
+        parts.append(Recorder.available.is_(False))
+
+    if criteria.get("time_sync"):
+        parts.append(Recorder.time_sync.is_(False))
+
+    if criteria.get("inspection_date"):
+        today = datetime.now(ZoneInfo("Europe/Moscow")).date()
+        stale_before = today - timedelta(days=INSPECTION_FRESH_DAYS)
+        parts.append(Recorder.last_inspection_date.is_(None))
+        parts.append(Recorder.last_inspection_date < stale_before)
+
+    if not parts:
+        return db.false()
+
+    return db.or_(*parts)
 
 
 def _check_recorder_availability(ip_address):

@@ -41,6 +41,22 @@
         Допустимый диапазон: {{ min_ping_count }}–{{ max_ping_count }}.
     </p>
 
+    <h2>Настройки фильтра проблемных регистраторов</h2>
+    <p class="hint">
+        Выберите критерии, по которым регистратор считается проблемным
+        (фильтр «Показать проблемные» на странице списка).
+    </p>
+    {% for key, label in problematic_criteria_labels.items() %}
+    <label class="checkbox-label" for="problematic_{{ key }}">
+        <input type="checkbox"
+               id="problematic_{{ key }}"
+               name="problematic_{{ key }}"
+               value="on"
+               {% if problematic_criteria[key] %}checked{% endif %}>
+        {{ label }}
+    </label>
+    {% endfor %}
+
     <button type="submit" class="btn btn-primary">Сохранить</button>
 </form>
 {% endblock %}

@@ -157,6 +157,15 @@ with app.app_context():
     if not SystemSetting.query.filter_by(key="recorder_availability_ping_count").first():
         db.session.add(SystemSetting(key="recorder_availability_ping_count", value="3"))
 
+    for key, default in (
+        ("problematic_filter_depth", "yes"),
+        ("problematic_filter_availability", "yes"),
+        ("problematic_filter_time_sync", "no"),
+        ("problematic_filter_inspection_date", "yes"),
+    ):
+        if not SystemSetting.query.filter_by(key=key).first():
+            db.session.add(SystemSetting(key=key, value=default))
+
     db.session.commit()
 
     print("Database ready.")
